@@ -1,5 +1,9 @@
 from fastapi import FastAPI
-from app.api.users_router import router as users_router
+from app.api.user_router import router as users_router
+from app.api.todo_router import router as todos_router
+
 
 app = FastAPI()
+
 app.include_router(users_router)
+app.include_router(todos_router)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,3 +36,8 @@ class ToDoService:
         if deleted_todo == 0:
             raise HTTPException(status_code=404, detail="ToDo not found")
         return {"message": "ToDo deleted"}
+
+
+@lru_cache
+def get_todo_service() -> ToDoService:
+    return ToDoService()
