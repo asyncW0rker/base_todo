@@ -2,13 +2,16 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
-from app.database.schemas import ToDoCreate, ToDoUpdate
+from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput
 from app.services.todo_service import ToDoService, get_todo_service
 
-router = APIRouter(prefix="todos", tags=["todos"])
+router = APIRouter(prefix="/todos", tags=["todos"])
 
 
-@router.get("/todos")
+@router.get(
+    "/",
+    response_model=list[ToDoOutput],
+)
 async def get_todos(
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
@@ -16,7 +19,10 @@ async def get_todos(
     return await todo_service.get_all_todos(session)
 
 
-@router.get("/todos/{todo_id}")
+@router.get(
+    "/{todo_id}",
+    response_model=ToDoOutput,
+)
 async def get_todos(
     todo_id: int,
     session: AsyncSession = Depends(get_session),
@@ -25,7 +31,10 @@ async def get_todos(
     return await todo_service.get_todo(session, todo_id)
 
 
-@router.post("/todos")
+@router.post(
+    "/",
+    response_model=ToDoOutput,
+)
 async def create_todo(
     todo_data: ToDoCreate,
     session: AsyncSession = Depends(get_session),
@@ -34,7 +43,7 @@ async def create_todo(
     return await todo_service.create_todo(session, todo_data)
 
 
-@router.put("/todos/{todo_id}")
+@router.put("/{todo_id}")
 async def update_todo(
     todo_id: int,
     todo_data: ToDoUpdate,
@@ -44,7 +53,7 @@ async def update_todo(
     return await todo_service.update_todo(session, todo_id, todo_data)
 
 
-@router.delete("/todos/{todo_id}")
+@router.delete("/{todo_id}")
 async def delete_todo(
     todo_id: int,
     session: AsyncSession = Depends(get_session),

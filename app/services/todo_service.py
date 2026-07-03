@@ -14,7 +14,7 @@ class ToDoService:
     repo: ToDoRepository = ToDoRepository()
 
     async def create_todo(self, session: AsyncSession, todo_data: ToDoCreate) -> ToDo:
-        return await self.create_todo(session, todo_data.model_dump())
+        return await self.repo.create_one(session, todo_data.model_dump())
 
     async def get_todo(self, session: AsyncSession, todo_id: int) -> ToDo | None:
         todo = await self.repo.get_one(session, todo_id)
