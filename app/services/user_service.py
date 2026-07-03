@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from functools import lru_cache
 from fastapi import HTTPException
 from sqlalchemy import Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,3 +37,8 @@ class UserService:
     async def delete_all_users(self, session: AsyncSession) -> dict[str, Any]:
         await self.repo.delete_all(session)
         return {"message": "All users deleted"}
+
+
+@lru_cache
+def get_user_service() -> UserService:
+    return UserService()
