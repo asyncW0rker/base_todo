@@ -11,6 +11,21 @@ class UserOutput(BaseModel):
     username: str
 
 
-class ToDoCreate(BaseModel):
+class ToDoBase(BaseModel):
     title: str
     description: str
+
+
+class ToDoCreate(ToDoBase):
+    pass
+
+
+class ToDoUpdate(ToDoBase):
+    completed: bool
+
+
+class ToDoOutput(BaseModel):
+    id: int
+    title: str
+    description: str
+    completed: bool
