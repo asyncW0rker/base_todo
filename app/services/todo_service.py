@@ -37,6 +37,10 @@ class ToDoService:
             raise HTTPException(status_code=404, detail="ToDo not found")
         return {"message": "ToDo deleted"}
 
+    async def delete_all_todos(self, session: AsyncSession):
+        await self.repo.delete_all(session)
+        return {"message": "All todos deleted"}
+
 
 @lru_cache
 def get_todo_service() -> ToDoService:

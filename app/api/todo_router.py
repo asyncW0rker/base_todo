@@ -23,7 +23,7 @@ async def get_todos(
     "/{todo_id}",
     response_model=ToDoOutput,
 )
-async def get_todos(
+async def get_todo(
     todo_id: int,
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
@@ -60,3 +60,11 @@ async def delete_todo(
     todo_service: ToDoService = Depends(get_todo_service),
 ):
     return await todo_service.delete_todo(session, todo_id)
+
+
+@router.delete("/")
+async def delete_todos(
+    session: AsyncSession = Depends(get_session),
+    todo_service: ToDoService = Depends(get_todo_service),
+):
+    return await todo_service.delete_all_todos(session)
