@@ -1,0 +1,38 @@
+from dataclasses import dataclass
+from typing import Any
+
+from fastapi import HTTPException
+from sqlalchemy import Sequence
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import User
+from app.repos.user_repo import UserRepository
+from app.schemas import UserCreate
+from app.utils.password_manager import PasswordManager
+
+
+@dataclass
+class UserService:
+    repo: UserRepository = UserRepository()
+    password_manager: PasswordManager = PasswordManager()
+
+    async def register_user(self, session: AsyncSession, user_data: UserCreate) -> User:
+        existed_user = await self.repo.get_one_by_username(session, user_data.username)
+        if existed_user is not None:
+            raise HTTPException(409, "User already exists")
+
+        user_data.password = self.password_manager.hash_password(user_data.password)
+        return await self.repo.create_one(session, user_data.model_dump())
+
+    async def get_user(self, session: AsyncSession, user_id: int) -> User:
+        user = await self.repo.get_one(session, user_id)
+        if user is None:
+            raise HTTPException(404, "User not found")
+        return user
+
+    async def get_all_users(self, session: AsyncSession) -> Sequence[User]:
+        return await self.repo.get_all(session)
+
+    async def delete_all_users(self, session: AsyncSession) -> dict[str, Any]:
+        await self.repo.delete_all(session)
+        return {"message": "All users deleted"}
