@@ -9,3 +9,8 @@ class UserCreate(BaseModel):
 class UserOutput(BaseModel):
     id: int
     username: str
+
+
+class ToDoCreate(BaseModel):
+    title: str
+    description: str
