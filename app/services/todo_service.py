@@ -16,7 +16,7 @@ class ToDoService:
         return await self.create_todo(session, todo_data.model_dump())
 
     async def get_todo(self, session: AsyncSession, todo_id: int) -> ToDo | None:
-        todo = await self.repo.get_one_by_id(session, todo_id)
+        todo = await self.repo.get_one(session, todo_id)
         if todo is None:
             raise HTTPException(status_code=404, detail="ToDo not found")
         return todo
