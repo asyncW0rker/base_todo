@@ -1,6 +1,6 @@
 import bcrypt
 
-from app.config import settings
+from app.utils.config import settings
 
 
 class PasswordManager:

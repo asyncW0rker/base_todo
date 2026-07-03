@@ -6,9 +6,9 @@ from fastapi import HTTPException
 from sqlalchemy import Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import User
+from app.database.models import User
 from app.repos.user_repo import UserRepository
-from app.schemas import UserCreate
+from app.database.schemas import UserCreate
 from app.utils.password_manager import PasswordManager
 
 
