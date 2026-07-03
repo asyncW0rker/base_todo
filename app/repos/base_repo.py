@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import select, Sequence, delete
+from sqlalchemy import select, Sequence, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -24,3 +24,8 @@ class BaseRepository:
     async def delete_all(self, session: AsyncSession) -> None:
         await session.execute(delete(self.model))
         await session.commit()
+
+    async def update_one(self, session: AsyncSession, id: int, update_data: dict[str, Any]) -> int:
+        result = await session.execute(update(self.model).where(self.model.id == id).values(**update_data))
+        await session.commit()
+        return result.rowcount
