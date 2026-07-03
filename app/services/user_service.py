@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
 from app.repos.user_repo import UserRepository
-from app.database.schemas import UserCreate
+from app.database.schemas import UserCreate, UserUpdate
 from app.utils.password_manager import PasswordManager
 
 
@@ -33,6 +33,18 @@ class UserService:
 
     async def get_all_users(self, session: AsyncSession) -> Sequence[User]:
         return await self.repo.get_all(session)
+
+    async def update_user(self, session: AsyncSession, user_id: int, update_data: UserUpdate):
+        changed_user = await self.repo.update_one(session, user_id, update_data.model_dump())
+        if changed_user == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"message": "User updated"}
+
+    async def delete_user(self, session: AsyncSession, user_id: int) -> dict:
+        deleted_user = await self.repo.delete_one(session, user_id)
+        if deleted_user == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"message": "User deleted"}
 
     async def delete_all_users(self, session: AsyncSession) -> dict[str, Any]:
         await self.repo.delete_all(session)
