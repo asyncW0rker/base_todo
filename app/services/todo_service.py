@@ -7,14 +7,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate
 from app.repos.todo_repo import ToDoRepository
+from app.repos.user_repo import UserRepository
 
 
 @dataclass
 class ToDoService:
     repo: ToDoRepository = ToDoRepository()
+    user_repo: UserRepository = UserRepository()
 
-    async def create_todo(self, session: AsyncSession, todo_data: ToDoCreate) -> ToDo:
-        return await self.repo.create_one(session, todo_data.model_dump())
+    async def _check_user_existence(self, session: AsyncSession, user_id: int) -> None:
+        user = await self.user_repo.get_one(session, user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+    async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDo:
+        if creation_data.user_id is not None:
+            await self._check_user_existence(session, creation_data.user_id)
+
+        return await self.repo.create_one(session, creation_data.model_dump())
 
     async def get_todo(self, session: AsyncSession, todo_id: int) -> ToDo | None:
         todo = await self.repo.get_one(session, todo_id)
@@ -26,6 +36,9 @@ class ToDoService:
         return await self.repo.get_all(session)
 
     async def update_todo(self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate):
+        if update_data.user_id is not None:
+            await self._check_user_existence(session, update_data.user_id)
+
         changed_todo = await self.repo.update_one(session, todo_id, update_data.model_dump())
         if changed_todo == 0:
             raise HTTPException(status_code=404, detail="ToDo not found")

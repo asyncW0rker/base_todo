@@ -22,6 +22,7 @@ class UserOutput(BaseModel):
 class ToDoBase(BaseModel):
     title: str
     description: str
+    user_id: int | None = None
 
 
 class ToDoCreate(ToDoBase):
@@ -37,3 +38,4 @@ class ToDoOutput(BaseModel):
     title: str
     description: str
     completed: bool
+    user_id: int | None

@@ -17,13 +17,13 @@ class UserService:
     repo: UserRepository = UserRepository()
     password_manager: PasswordManager = PasswordManager()
 
-    async def register_user(self, session: AsyncSession, user_data: UserCreate) -> User:
-        existed_user = await self.repo.get_one_by_username(session, user_data.username)
+    async def register_user(self, session: AsyncSession, creation_data: UserCreate) -> User:
+        existed_user = await self.repo.get_one_by_username(session, creation_data.username)
         if existed_user is not None:
             raise HTTPException(409, "User already exists")
 
-        user_data.password = self.password_manager.hash_password(user_data.password)
-        return await self.repo.create_one(session, user_data.model_dump())
+        creation_data.password = self.password_manager.hash_password(creation_data.password)
+        return await self.repo.create_one(session, creation_data.model_dump())
 
     async def get_user(self, session: AsyncSession, user_id: int) -> User:
         user = await self.repo.get_one(session, user_id)
