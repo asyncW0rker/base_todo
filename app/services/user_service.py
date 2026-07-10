@@ -25,14 +25,14 @@ class UserService:
         creation_data.password = self.password_manager.hash_password(creation_data.password)
         return await self.repo.create_one(session, creation_data.model_dump())
 
-    async def get_user(self, session: AsyncSession, user_id: int) -> User:
-        user = await self.repo.get_one(session, user_id)
+    async def get_user(self, session: AsyncSession, user_id: int) -> User | None:
+        user = await self.repo.get_one_with_todos(session, user_id)
         if user is None:
             raise HTTPException(404, "User not found")
         return user
 
     async def get_all_users(self, session: AsyncSession) -> Sequence[User]:
-        return await self.repo.get_all(session)
+        return await self.repo.get_all_with_todos(session)
 
     async def update_user(self, session: AsyncSession, user_id: int, update_data: UserUpdate):
         changed_user = await self.repo.update_one(session, user_id, update_data.model_dump())

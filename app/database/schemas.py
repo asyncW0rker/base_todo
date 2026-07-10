@@ -14,11 +14,6 @@ class UserUpdate(UserBase):
     pass
 
 
-class UserOutput(BaseModel):
-    id: int
-    username: str
-
-
 class ToDoBase(BaseModel):
     title: str
     description: str
@@ -39,3 +34,9 @@ class ToDoOutput(BaseModel):
     description: str
     completed: bool
     user_id: int | None
+
+
+class UserOutput(BaseModel):
+    id: int
+    username: str
+    todos: list[ToDoOutput]
