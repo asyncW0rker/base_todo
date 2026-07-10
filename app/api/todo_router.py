@@ -13,10 +13,12 @@ router = APIRouter(prefix="/todos", tags=["todos"])
     response_model=list[ToDoOutput],
 )
 async def get_todos(
+    limit: int = 10,
+    offset: int = 0,
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
-    return await todo_service.get_all_todos(session)
+    return await todo_service.get_many_todos(session, limit, offset)
 
 
 @router.get(

@@ -35,6 +35,9 @@ class ToDoService:
     async def get_all_todos(self, session: AsyncSession):
         return await self.repo.get_all(session)
 
+    async def get_many_todos(self, session: AsyncSession, limit: int, offset: int):
+        return await self.repo.get_many(session, limit, offset)
+
     async def update_todo(self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate):
         if update_data.user_id is not None:
             await self._check_user_existence(session, update_data.user_id)
