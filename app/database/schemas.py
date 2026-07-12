@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 
 class UserBase(BaseModel):
@@ -28,6 +28,10 @@ class ToDoCreate(ToDoBase):
 
 class ToDoUpdate(ToDoBase):
     completed: bool
+
+    @computed_field
+    def completed_at(self) -> datetime | None:
+        return datetime.now() if self.completed else None
 
 
 class ToDoOutput(BaseModel):
