@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -33,6 +35,8 @@ class ToDoOutput(BaseModel):
     title: str
     description: str
     completed: bool
+    completed_at: datetime | None
+    created_at: datetime
     user_id: int | None
 
 
@@ -42,6 +46,10 @@ class UserOutput(BaseModel):
     todos: list[ToDoOutput]
 
 
-class ToDoFilterParams(BaseModel):
+class BaseFilterParams(BaseModel):
     limit: int = Field(10, gt=0, le=100)
     offset: int = Field(0, ge=0)
+
+
+class ToDoFilterParams(BaseFilterParams):
+    pass

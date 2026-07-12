@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +23,8 @@ class ToDo(Base):
     title: Mapped[str]
     description: Mapped[str]
     completed: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    completed_at: Mapped[datetime] = mapped_column(nullable=True)
 
     user_id: Mapped[int | None] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=True)
     user: Mapped[User] = relationship(back_populates="todos")
