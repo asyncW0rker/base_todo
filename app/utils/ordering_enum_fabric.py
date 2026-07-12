@@ -1,11 +1,9 @@
 from enum import StrEnum
 from typing import Any
 
-from app.database.schemas import ToDoOutput
 
-
-def get_ordering_fields(scheme: Any):
-    return list(scheme.model_json_schema()['properties'].keys())
+def get_ordering_fields(schema: Any):
+    return list(schema.model_json_schema()["properties"].keys())
 
 
 def create_ordering_values_from_fields(fields: list[str]) -> dict[str, str]:
@@ -19,10 +17,7 @@ def create_ordering_enum_class(class_name: str, enum_vals: dict[str, str]) -> St
     return StrEnum(class_name, enum_vals)
 
 
-def generate_ordering_enum(name: str, scheme: Any) -> StrEnum:
-    fields = get_ordering_fields(scheme)
+def generate_ordering_enum(name: str, schema: Any) -> StrEnum:
+    fields = get_ordering_fields(schema)
     enum_vals = create_ordering_values_from_fields(fields)
     return create_ordering_enum_class(name, enum_vals)
-
-
-ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput)

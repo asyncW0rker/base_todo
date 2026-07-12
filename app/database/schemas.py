@@ -2,6 +2,8 @@ from datetime import datetime, UTC
 
 from pydantic import BaseModel, Field, computed_field
 
+from app.utils.ordering_enum_fabric import generate_ordering_enum
+
 
 class UserBase(BaseModel):
     username: str
@@ -57,3 +59,6 @@ class BaseFilterParams(BaseModel):
 
 class ToDoFilterParams(BaseFilterParams):
     pass
+
+
+ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput)
