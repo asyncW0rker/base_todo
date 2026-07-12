@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UserBase(BaseModel):
@@ -40,3 +40,8 @@ class UserOutput(BaseModel):
     id: int
     username: str
     todos: list[ToDoOutput]
+
+
+class ToDoFilterParams(BaseModel):
+    limit: int = Field(10, gt=0, le=100)
+    offset: int = Field(0, ge=0)

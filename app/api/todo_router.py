@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
-from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput
+from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoFilterParams
 from app.services.todo_service import ToDoService, get_todo_service
+
 
 router = APIRouter(prefix="/todos", tags=["todos"])
 
@@ -13,12 +16,15 @@ router = APIRouter(prefix="/todos", tags=["todos"])
     response_model=list[ToDoOutput],
 )
 async def get_todos(
-    limit: int = 10,
-    offset: int = 0,
+    filter_params: Annotated[ToDoFilterParams, Query()],
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
-    return await todo_service.get_many_todos(session, limit, offset)
+    return await todo_service.get_many_todos(
+        session=session,
+        limit=filter_params.limit,
+        offset=filter_params.offset
+    )
 
 
 @router.get(
