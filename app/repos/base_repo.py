@@ -13,6 +13,12 @@ class BaseRepository:
             return query.order_by(desc(sort_by[1:]))
         return query.order_by(sort_by)
 
+    @staticmethod
+    def _add_limit_and_offset(
+            query: GenerativeSelect, limit: int = 10, offset: int = 0
+    ) -> GenerativeSelect | Executable:
+        return query.limit(limit).offset(offset)
+
     async def create_one(self, session: AsyncSession, creation_data: dict[str, Any]) -> Any:
         new_object = self.model(**creation_data)
         session.add(new_object)
