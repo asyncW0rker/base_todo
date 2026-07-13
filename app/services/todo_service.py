@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoSortingFields, ToDoFilterParams, ToDoOrderingParams
+from app.errors.exceptions import TimezoneException
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
 
@@ -46,6 +47,12 @@ class ToDoService:
             ordering_params=ordering_params.model_dump(),
             filter_params=filter_params.model_dump(),
         )
+
+    async def get_analytics(self, session: AsyncSession):
+        try:
+            return await self.repo.get_analytics(session)
+        except TimezoneException:
+            raise HTTPException(status_code=400, detail="Invalid timezone")
 
     async def update_todo(self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate):
         if update_data.user_id is not None:

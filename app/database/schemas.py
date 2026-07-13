@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import datetime, date
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -71,5 +71,5 @@ class ToDoOrderingParams(BaseOrderingParams):
 class ToDoFilterParams(BaseFilterParams):
     completed: bool | None = None
     title_contains: str | None = None
-    created_after: datetime | None = None
-    created_before: datetime | None = None
+    created_after: date | None = None
+    created_before: date | None = None

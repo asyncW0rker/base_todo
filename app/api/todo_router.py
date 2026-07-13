@@ -28,6 +28,14 @@ async def get_todos(
     )
 
 
+@router.get("/analytics")
+async def get_todos_analytics(
+    session: AsyncSession = Depends(get_session),
+    todo_service: ToDoService = Depends(get_todo_service),
+):
+    return await todo_service.get_analytics(session=session)
+
+
 @router.get(
     "/{todo_id}",
     response_model=ToDoOutput,
