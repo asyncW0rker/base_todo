@@ -2,6 +2,7 @@ from typing import Sequence, Any
 
 import pytz
 from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
@@ -105,7 +106,11 @@ class ToDoRepository(BaseRepository):
         completed_count = rows[0].completed_count if rows else 0
         average_completed = rows[0].average_completed if rows else 0
         avg_completion_time_hours = round(average_completed.total_seconds() / 3600, 2)
-        weekday_distribution = await self._get_weekday_analytics(session, timezone_str)
+
+        try:
+            weekday_distribution = await self._get_weekday_analytics(session, timezone_str)
+        except DBAPIError:
+            raise TimezoneException
 
         return {
             "total_count": total_count,

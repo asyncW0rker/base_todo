@@ -97,7 +97,7 @@ class WeekdayDistribution(BaseModel):
 
 
 class ToDoAnalyticsOutput(BaseModel):
-    total: int
+    total_count: int
     completed_stats: CompletedStats
     avg_completion_time_hours: float
     weekday_distribution: WeekdayDistribution
