@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
-from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoFilterParams
+from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams
 from app.services.todo_service import ToDoService, get_todo_service
 
 
@@ -16,15 +16,15 @@ router = APIRouter(prefix="/todos", tags=["todos"])
     response_model=list[ToDoOutput],
 )
 async def get_todos(
-    filter_params: Annotated[ToDoFilterParams, Query()],
+    ordering_params: Annotated[ToDoOrderingParams, Depends()],
+    filter_params: Annotated[ToDoFilterParams, Depends()],
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
     return await todo_service.get_many_todos(
         session=session,
-        limit=filter_params.limit,
-        offset=filter_params.offset,
-        sort_by=filter_params.sort_by,
+        ordering_params=ordering_params,
+        filter_params=filter_params,
     )
 
 

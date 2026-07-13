@@ -52,13 +52,24 @@ class UserOutput(BaseModel):
     todos: list[ToDoOutput]
 
 
-class BaseFilterParams(BaseModel):
+class BaseOrderingParams(BaseModel):
     limit: int = Field(10, gt=0, le=100)
     offset: int = Field(0, ge=0)
+
+
+class BaseFilterParams(BaseModel):
+    pass
 
 
 ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput, ["created",])
 
 
-class ToDoFilterParams(BaseFilterParams):
+class ToDoOrderingParams(BaseOrderingParams):
     sort_by: ToDoSortingFields = ToDoSortingFields.CREATED_AT
+
+
+class ToDoFilterParams(BaseFilterParams):
+    completed: bool | None = None
+    title_contains: str | None = None
+    completed_after: datetime | None = None
+    completed_before: datetime | None = None
