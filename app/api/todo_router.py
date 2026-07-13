@@ -23,7 +23,8 @@ async def get_todos(
     return await todo_service.get_many_todos(
         session=session,
         limit=filter_params.limit,
-        offset=filter_params.offset
+        offset=filter_params.offset,
+        sort_by=filter_params.sort_by,
     )
 
 

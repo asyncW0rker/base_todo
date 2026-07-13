@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
-from app.database.schemas import ToDoCreate, ToDoUpdate
+from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoSortingFields
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
 
@@ -35,8 +35,14 @@ class ToDoService:
     async def get_all_todos(self, session: AsyncSession):
         return await self.repo.get_all(session)
 
-    async def get_many_todos(self, session: AsyncSession, limit: int, offset: int):
-        return await self.repo.get_many(session, limit, offset)
+    async def get_many_todos(
+        self,
+        session: AsyncSession,
+        limit: int,
+        offset: int,
+        sort_by: ToDoSortingFields,
+    ):
+        return await self.repo.get_many(session, limit, offset, sort_by)
 
     async def update_todo(self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate):
         if update_data.user_id is not None:

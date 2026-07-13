@@ -1,11 +1,17 @@
 from typing import Any
 
-from sqlalchemy import select, Sequence, delete, update
+from sqlalchemy import select, Sequence, delete, update, GenerativeSelect, desc, Executable
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class BaseRepository:
     model = None
+
+    @staticmethod
+    def _add_ordering_params(query: GenerativeSelect, sort_by: str) -> GenerativeSelect | Executable:
+        if sort_by.startswith("-"):
+            return query.order_by(desc(sort_by[1:]))
+        return query.order_by(sort_by)
 
     async def create_one(self, session: AsyncSession, creation_data: dict[str, Any]) -> Any:
         new_object = self.model(**creation_data)
