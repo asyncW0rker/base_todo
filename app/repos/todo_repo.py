@@ -23,7 +23,7 @@ class ToDoRepository(BaseRepository):
         if completed is not None:
             filter_conditions.append(self.model.completed == completed)
         if title_contains is not None:
-            filter_conditions.append(self.model.title.contains(title_contains))
+            filter_conditions.append(self.model.title.icontains(title_contains))
         if created_after is not None:
             filter_conditions.append(self.model.created_at >= created_after)
         if created_before is not None:
@@ -35,13 +35,15 @@ class ToDoRepository(BaseRepository):
         self,
         session: AsyncSession,
         filter_params: dict[str, Any],
-        limit: int = 10,
-        offset: int = 0,
-        sort_by: ToDoSortingFields = ToDoSortingFields.CREATED_AT,
+        ordering_params: dict[str, Any],
     ) -> Sequence[ToDo]:
+        limit, offset = ordering_params.get("limit", 10), ordering_params.get("offset", 0)
+        sort_by = ordering_params.get("sort_by", ToDoSortingFields.CREATED_AT)
+
         query = select(self.model)
         filtered_query = self._add_filter_params(query, filter_params)
         limited_query = self._add_limit_and_offset(filtered_query, limit, offset)
         sorted_query = self._add_ordering_params(limited_query, sort_by)
+
         result = await session.execute(sorted_query)
         return result.scalars().all()

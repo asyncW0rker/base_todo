@@ -43,9 +43,7 @@ class ToDoService:
     ):
         return await self.repo.get_many(
             session=session,
-            limit=ordering_params.limit,
-            offset=ordering_params.offset,
-            sort_by=ordering_params.sort_by,
+            ordering_params=ordering_params.model_dump(),
             filter_params=filter_params.model_dump(),
         )
 
