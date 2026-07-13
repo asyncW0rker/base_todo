@@ -7,6 +7,7 @@ from sqlalchemy import Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
+from app.errors.exceptions import HTTPUserAlreadyExistsException, HTTPUserNotFoundException
 from app.repos.user_repo import UserRepository
 from app.database.schemas import UserCreate, UserUpdate
 from app.utils.password_manager import PasswordManager
@@ -20,7 +21,7 @@ class UserService:
     async def register_user(self, session: AsyncSession, creation_data: UserCreate) -> User:
         existed_user = await self.repo.get_one_by_username(session, creation_data.username)
         if existed_user is not None:
-            raise HTTPException(409, "User already exists")
+            raise HTTPUserAlreadyExistsException
 
         creation_data.password = self.password_manager.hash_password(creation_data.password)
         return await self.repo.create_one(session, creation_data.model_dump())
@@ -28,7 +29,7 @@ class UserService:
     async def get_user(self, session: AsyncSession, user_id: int) -> User | None:
         user = await self.repo.get_one_with_todos(session, user_id)
         if user is None:
-            raise HTTPException(404, "User not found")
+            raise HTTPUserNotFoundException
         return user
 
     async def get_all_users(self, session: AsyncSession) -> Sequence[User]:
@@ -37,13 +38,13 @@ class UserService:
     async def update_user(self, session: AsyncSession, user_id: int, update_data: UserUpdate):
         changed_user = await self.repo.update_one(session, user_id, update_data.model_dump())
         if changed_user == 0:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPUserNotFoundException
         return {"message": "User updated"}
 
     async def delete_user(self, session: AsyncSession, user_id: int) -> dict:
         deleted_user = await self.repo.delete_one(session, user_id)
         if deleted_user == 0:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPUserNotFoundException
         return {"message": "User deleted"}
 
     async def delete_all_users(self, session: AsyncSession) -> dict[str, Any]:

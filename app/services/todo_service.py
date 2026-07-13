@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from functools import lru_cache
 
-from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
-from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoSortingFields, ToDoFilterParams, ToDoOrderingParams
-from app.errors.exceptions import TimezoneException
+from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams
+from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
+    HTTPInvalidTimezoneException
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
 
@@ -19,7 +19,7 @@ class ToDoService:
     async def _check_user_existence(self, session: AsyncSession, user_id: int) -> None:
         user = await self.user_repo.get_one(session, user_id)
         if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPUserNotFoundException
 
     async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDo:
         if creation_data.user_id is not None:
@@ -30,7 +30,7 @@ class ToDoService:
     async def get_todo(self, session: AsyncSession, todo_id: int) -> ToDo | None:
         todo = await self.repo.get_one(session, todo_id)
         if todo is None:
-            raise HTTPException(status_code=404, detail="ToDo not found")
+            raise HTTPToDoNotFoundException
         return todo
 
     async def get_all_todos(self, session: AsyncSession):
@@ -52,7 +52,7 @@ class ToDoService:
         try:
             return await self.repo.get_analytics(session)
         except TimezoneException:
-            raise HTTPException(status_code=400, detail="Invalid timezone")
+            raise HTTPInvalidTimezoneException
 
     async def update_todo(self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate):
         if update_data.user_id is not None:
@@ -60,13 +60,13 @@ class ToDoService:
 
         changed_todo = await self.repo.update_one(session, todo_id, update_data.model_dump())
         if changed_todo == 0:
-            raise HTTPException(status_code=404, detail="ToDo not found")
+            raise HTTPToDoNotFoundException
         return {"message": "ToDo updated"}
 
     async def delete_todo(self, session: AsyncSession, todo_id: int):
         deleted_todo = await self.repo.delete_one(session, todo_id)
         if deleted_todo == 0:
-            raise HTTPException(status_code=404, detail="ToDo not found")
+            raise HTTPToDoNotFoundException
         return {"message": "ToDo deleted"}
 
     async def delete_all_todos(self, session: AsyncSession):
