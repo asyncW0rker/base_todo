@@ -2,8 +2,11 @@ from enum import StrEnum
 from typing import Any
 
 
-def get_ordering_fields(schema: Any):
-    return list(schema.model_json_schema()["properties"].keys())
+def get_ordering_fields(schema: Any, exclude_fields: list[str] | None = None) -> list[Any]:
+    fields = schema.model_json_schema()["properties"].keys()
+    if exclude_fields:
+        return list(filter(lambda f: f not in exclude_fields, fields))
+    return list(fields)
 
 
 def create_ordering_values_from_fields(fields: list[str]) -> dict[str, str]:
@@ -17,7 +20,11 @@ def create_ordering_enum_class(class_name: str, enum_vals: dict[str, str]) -> St
     return StrEnum(class_name, enum_vals)
 
 
-def generate_ordering_enum(name: str, schema: Any) -> StrEnum:
-    fields = get_ordering_fields(schema)
+def generate_ordering_enum(
+    class_name: str,
+    schema: Any,
+    exclude_fields: list[str] | None = None
+) -> StrEnum:
+    fields = get_ordering_fields(schema, exclude_fields=exclude_fields)
     enum_vals = create_ordering_values_from_fields(fields)
-    return create_ordering_enum_class(name, enum_vals)
+    return create_ordering_enum_class(class_name, enum_vals)

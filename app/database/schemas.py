@@ -57,7 +57,7 @@ class BaseFilterParams(BaseModel):
     offset: int = Field(0, ge=0)
 
 
-ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput)
+ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput, ["created"])
 
 
 class ToDoFilterParams(BaseFilterParams):
