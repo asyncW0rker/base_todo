@@ -1,8 +1,9 @@
 from datetime import datetime, date
 
+import pytz
 from pydantic import BaseModel, Field, computed_field
 
-from app.utils.ordering_enum_fabric import generate_ordering_enum
+from app.utils.enum_fabric import generate_ordering_enum, generate_enum_from_fields
 
 
 class UserBase(BaseModel):
@@ -62,6 +63,7 @@ class BaseFilterParams(BaseModel):
 
 
 ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput, ["created",])
+AvailableTimezones = generate_enum_from_fields("AvailableTimezones", pytz.all_timezones)
 
 
 class ToDoOrderingParams(BaseOrderingParams):
@@ -73,3 +75,32 @@ class ToDoFilterParams(BaseFilterParams):
     title_contains: str | None = None
     created_after: date | None = None
     created_before: date | None = None
+
+
+class ToDoAnalyticsFilterParams(BaseFilterParams):
+    timezone: AvailableTimezones = AvailableTimezones.EUROPE_MOSCOW
+
+
+class CompletedStats(BaseModel):
+    true: int = 0
+    false: int = 0
+
+
+class WeekdayDistribution(BaseModel):
+    Monday: int = 0
+    Tuesday: int = 0
+    Wednesday: int = 0
+    Thursday: int = 0
+    Friday: int = 0
+    Saturday: int = 0
+    Sunday: int = 0
+
+
+class ToDoAnalyticsOutput(BaseModel):
+    total: int
+    completed_stats: CompletedStats
+    avg_completion_time_hours: float
+    weekday_distribution: WeekdayDistribution
+
+    class Config:
+        from_attributes = True

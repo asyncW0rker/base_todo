@@ -84,7 +84,7 @@ class ToDoRepository(BaseRepository):
         self,
         session: AsyncSession,
         timezone_str: str = "Europe/Moscow",
-    ):
+    ) -> dict[str, Any]:
         query = select(
             func.count(self.model.id).label("total_count"),
             func.sum(
@@ -110,8 +110,8 @@ class ToDoRepository(BaseRepository):
         return {
             "total_count": total_count,
             "completed_stats": {
-                True: completed_count,
-                False: total_count - completed_count,
+                "true": completed_count,
+                "false": total_count - completed_count,
             },
             "avg_completion_time_hours": avg_completion_time_hours,
             "weekday_distribution": weekday_distribution,

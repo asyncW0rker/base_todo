@@ -4,7 +4,8 @@ from functools import lru_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
-from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams
+from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
+    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput
 from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPInvalidTimezoneException
 from app.repos.todo_repo import ToDoRepository
@@ -48,9 +49,12 @@ class ToDoService:
             filter_params=filter_params.model_dump(),
         )
 
-    async def get_analytics(self, session: AsyncSession):
+    async def get_analytics(
+            self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
+    ) -> ToDoAnalyticsOutput:
         try:
-            return await self.repo.get_analytics(session)
+            analytics = await self.repo.get_analytics(session, filter_params.timezone)
+            return ToDoAnalyticsOutput.model_validate(analytics)
         except TimezoneException:
             raise HTTPInvalidTimezoneException
 
