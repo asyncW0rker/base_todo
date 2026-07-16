@@ -104,3 +104,12 @@ class ToDoAnalyticsOutput(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ToDoStatusUpdate(BaseModel):
+    ids: list[int]
+    completed: bool = True
+
+    @computed_field
+    def completed_at(self):
+        return datetime.now() if self.completed else None

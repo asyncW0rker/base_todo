@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
-    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput
+    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate
 from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPInvalidTimezoneException
 from app.repos.todo_repo import ToDoRepository
@@ -62,10 +62,20 @@ class ToDoService:
         if update_data.user_id is not None:
             await self._check_user_existence(session, update_data.user_id)
 
-        changed_todo = await self.repo.update_one(session, todo_id, update_data.model_dump())
-        if changed_todo == 0:
+        changed_todos_count = await self.repo.update_one(session, todo_id, update_data.model_dump())
+        if changed_todos_count == 0:
             raise HTTPToDoNotFoundException
         return {"message": "ToDo updated"}
+
+    async def update_status_for_todos(self, session: AsyncSession, update_data: ToDoStatusUpdate):
+        update_data_dict = update_data.model_dump()
+        todos_ids = update_data_dict.pop("ids")
+        changed_todos_count = await self.repo.update_many(
+            session=session, items_ids=todos_ids, update_data=update_data_dict
+        )
+        return {
+            "updated_count": changed_todos_count
+        }
 
     async def delete_todo(self, session: AsyncSession, todo_id: int):
         deleted_todo = await self.repo.delete_one(session, todo_id)

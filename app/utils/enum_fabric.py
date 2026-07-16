@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Any
 
 
-def get_ordering_fields(schema: Any, exclude_fields: list[str] | None = None) -> list[Any]:
+def get_ordering_fields(schema: Any, exclude_fields: list[str] | None = None) -> list[str]:
     fields = schema.model_json_schema()["properties"].keys()
     if exclude_fields:
         return list(filter(lambda f: f not in exclude_fields, fields))
