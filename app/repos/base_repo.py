@@ -34,7 +34,22 @@ class BaseRepository:
         return result.scalars().all()
 
     async def update_one(self, session: AsyncSession, item_id: int, update_data: dict[str, Any]) -> int:
-        result = await session.execute(update(self.model).where(self.model.id == item_id).values(**update_data))
+        query = (
+            update(self.model)
+            .where(self.model.id == item_id)
+            .values(**update_data)
+        )
+        result = await session.execute(query)
+        await session.commit()
+        return result.rowcount
+
+    async def update_many(self, session: AsyncSession, items_ids: list[int], update_data: dict[str, Any]) -> int:
+        query = (
+            update(self.model)
+            .where(self.model.id.in_(items_ids))
+            .values(**update_data)
+        )
+        result = await session.execute(query)
         await session.commit()
         return result.rowcount
 
