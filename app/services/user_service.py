@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from functools import lru_cache
-from fastapi import HTTPException
 from sqlalchemy import Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -1,8 +1,10 @@
 from datetime import datetime, date
 
 import pytz
-from pydantic import BaseModel, Field, computed_field
+from fastapi import HTTPException
+from pydantic import BaseModel, Field, computed_field, field_validator
 
+from app.errors.exceptions import HTTPValueError
 from app.utils.enum_fabric import generate_ordering_enum, generate_enum_from_fields
 
 
@@ -107,9 +109,17 @@ class ToDoAnalyticsOutput(BaseModel):
 
 
 class ToDoStatusUpdate(BaseModel):
-    ids: list[int]
+    ids: str
     completed: bool = True
 
     @computed_field
     def completed_at(self) -> datetime | None:
         return datetime.now() if self.completed else None
+
+    @field_validator("ids")
+    @classmethod
+    def process_ids(cls, val):
+        try:
+            return list(map(int, val.split(",")))
+        except ValueError:
+            raise HTTPValueError

@@ -17,3 +17,5 @@ HTTPToDoNotFoundException = HTTPNotFoundException(detail="ToDo not found")
 HTTPAlreadyExistsException = partial(HTTPException, status_code=status.HTTP_409_CONFLICT)
 HTTPUserAlreadyExistsException = HTTPAlreadyExistsException(detail="User already exists")
 HTTPToDoAlreadyExistsException = HTTPAlreadyExistsException(detail="ToDo already exists")
+
+HTTPValueError = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid value")
