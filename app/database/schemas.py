@@ -111,5 +111,5 @@ class ToDoStatusUpdate(BaseModel):
     completed: bool = True
 
     @computed_field
-    def completed_at(self):
+    def completed_at(self) -> datetime | None:
         return datetime.now() if self.completed else None

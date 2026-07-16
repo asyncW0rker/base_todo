@@ -78,8 +78,8 @@ class ToDoService:
         }
 
     async def delete_todo(self, session: AsyncSession, todo_id: int):
-        deleted_todo = await self.repo.delete_one(session, todo_id)
-        if deleted_todo == 0:
+        deleted_todos_count = await self.repo.delete_one(session, todo_id)
+        if deleted_todos_count == 0:
             raise HTTPToDoNotFoundException
         return {"message": "ToDo deleted"}
 

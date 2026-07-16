@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams, \
-    ToDoAnalyticsFilterParams
+    ToDoAnalyticsFilterParams, ToDoStatusUpdate
 from app.services.todo_service import ToDoService, get_todo_service
 
 
@@ -70,6 +70,15 @@ async def update_todo(
     todo_service: ToDoService = Depends(get_todo_service),
 ):
     return await todo_service.update_todo(session, todo_id, todo_data)
+
+
+@router.patch("/")
+async def update_status_for_todos(
+    todo_data: ToDoStatusUpdate = Depends(),
+    session: AsyncSession = Depends(get_session),
+    todo_service: ToDoService = Depends(get_todo_service),
+):
+    return await todo_service.update_status_for_todos(session, todo_data)
 
 
 @router.delete("/{todo_id}")
