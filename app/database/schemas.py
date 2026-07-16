@@ -1,7 +1,6 @@
 from datetime import datetime, date
 
 import pytz
-from fastapi import HTTPException
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from app.errors.exceptions import HTTPValueError
