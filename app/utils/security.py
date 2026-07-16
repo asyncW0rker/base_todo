@@ -14,7 +14,7 @@ oauth_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 class PasswordManager:
-    DUMMY_HASH = bcrypt.hashpw(settings.DUMMY_HASH.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    DUMMY_HASH = bcrypt.hashpw(settings.security.DUMMY_HASH.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
     @staticmethod
     def hash_password(password: str) -> str:
@@ -30,16 +30,16 @@ class JWTManager:
     def create_token(payload_data: dict[str, Any]) -> str:
         payload = deepcopy(payload_data)
         current_time = dt.datetime.now(dt.UTC)
-        expire_time = current_time + dt.timedelta(seconds=settings.JWT_EXPIRE_SECONDS)
+        expire_time = current_time + dt.timedelta(seconds=settings.security.JWT_EXPIRE_SECONDS)
         payload.update({
             "exp": expire_time,
         })
-        return jwt.encode(payload, settings.JWT_SECRET, algorithm="SHA-256")
+        return jwt.encode(payload, settings.security.JWT_SECRET, algorithm="SHA-256")
 
     @staticmethod
     def decode_token(token: str) -> dict[str, Any]:
         try:
-            return jwt.decode(token, settings.JWT_SECRET, algorithms=["SHA-256"])
+            return jwt.decode(token, settings.security.JWT_SECRET, algorithms=["SHA-256"])
         except jwt.ExpiredSignatureError:
             raise JWTExpiredTokenException
         except jwt.InvalidTokenError:
