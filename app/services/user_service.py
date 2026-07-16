@@ -9,7 +9,7 @@ from app.database.models import User
 from app.errors.exceptions import HTTPUserAlreadyExistsException, HTTPUserNotFoundException
 from app.repos.user_repo import UserRepository
 from app.database.schemas import UserCreate, UserUpdate
-from app.utils.password_manager import PasswordManager
+from app.utils.security import PasswordManager
 
 
 @dataclass

@@ -8,6 +8,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "bcrypt>=5.0.0",
     "fastapi[all]>=0.138.2",
+    "pyjwt>=2.13.0",
     "pytz>=2026.2",
     "sqlalchemy>=2.0.51",
 ]
