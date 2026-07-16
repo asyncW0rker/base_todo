@@ -7,16 +7,17 @@ from app.errors.exceptions import HTTPValueError
 from app.utils.enum_fabric import generate_ordering_enum, generate_enum_from_fields
 
 
-class UserBase(BaseModel):
-    username: str
-    password: str
+possible_roles = ["user", "manager", "admin"]
+UserRole = generate_enum_from_fields("UserRole", possible_roles)
+AvailableTimezones = generate_enum_from_fields("AvailableTimezones", pytz.all_timezones)
 
 
-class UserCreate(UserBase):
-    pass
+class BaseOrderingParams(BaseModel):
+    limit: int = Field(10, gt=0, le=100)
+    offset: int = Field(0, ge=0)
 
 
-class UserUpdate(UserBase):
+class BaseFilterParams(BaseModel):
     pass
 
 
@@ -48,23 +49,7 @@ class ToDoOutput(BaseModel):
     user_id: int | None
 
 
-class UserOutput(BaseModel):
-    id: int
-    username: str
-    todos: list[ToDoOutput]
-
-
-class BaseOrderingParams(BaseModel):
-    limit: int = Field(10, gt=0, le=100)
-    offset: int = Field(0, ge=0)
-
-
-class BaseFilterParams(BaseModel):
-    pass
-
-
 ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput, ["created",])
-AvailableTimezones = generate_enum_from_fields("AvailableTimezones", pytz.all_timezones)
 
 
 class ToDoOrderingParams(BaseOrderingParams):
@@ -120,5 +105,24 @@ class ToDoStatusUpdate(BaseModel):
     def process_ids(cls, val):
         try:
             return list(map(int, val.split(",")))
-        except ValueError:
+        except (ValueError, TypeError):
             raise HTTPValueError
+
+
+class UserBase(BaseModel):
+    username: str
+    password: str
+
+
+class UserCreate(UserBase):
+    pass
+
+
+class UserUpdate(UserBase):
+    pass
+
+
+class UserOutput(BaseModel):
+    id: int
+    username: str
+    todos: list[ToDoOutput]
