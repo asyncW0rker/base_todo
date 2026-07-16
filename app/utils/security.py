@@ -1,9 +1,12 @@
+import datetime as dt
+from copy import deepcopy
 from typing import Any
 
 import bcrypt
 import jwt
 from fastapi.security import OAuth2PasswordBearer
 
+from app.errors.exceptions import JWTExpiredTokenException, JWTInvalidTokenException
 from app.utils.config import settings
 
 
@@ -23,13 +26,21 @@ class PasswordManager:
 
 
 class JWTManager:
-    def create_token(self, payload: dict[str, Any]) -> str:
-        return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm="SHA-256")
+    @staticmethod
+    def create_token(payload_data: dict[str, Any]) -> str:
+        payload = deepcopy(payload_data)
+        current_time = dt.datetime.now(dt.UTC)
+        expire_time = current_time + dt.timedelta(seconds=settings.JWT_EXPIRE_SECONDS)
+        payload.update({
+            "exp": expire_time,
+        })
+        return jwt.encode(payload, settings.JWT_SECRET, algorithm="SHA-256")
 
-    def decode_token(self, token: str) -> dict[str, Any]:
+    @staticmethod
+    def decode_token(token: str) -> dict[str, Any]:
         try:
-            return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["SHA-256"])
-        except jwt.InvalidTokenError:
-            raise
+            return jwt.decode(token, settings.JWT_SECRET, algorithms=["SHA-256"])
         except jwt.ExpiredSignatureError:
-            return None
+            raise JWTExpiredTokenException
+        except jwt.InvalidTokenError:
+            raise JWTInvalidTokenException
