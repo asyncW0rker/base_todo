@@ -125,7 +125,10 @@ class UserUpdate(UserBase):
 class UserOutput(BaseModel):
     id: int
     username: str
-    todos: list[ToDoOutput]
+
+
+class UserWithTodos(UserOutput):
+    todos: list[ToDoOutput] = Field(default_factory=list)
 
 
 class AuthData(UserBase):

@@ -34,12 +34,12 @@ class JWTManager:
         payload.update({
             "exp": expire_time,
         })
-        return jwt.encode(payload, settings.security.JWT_SECRET, algorithm="SHA-256")
+        return jwt.encode(payload, settings.security.JWT_SECRET, algorithm="HS256")
 
     @staticmethod
     def decode_token(token: str) -> dict[str, Any]:
         try:
-            return jwt.decode(token, settings.security.JWT_SECRET, algorithms=["SHA-256"])
+            return jwt.decode(token, settings.security.JWT_SECRET, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
             raise JWTExpiredTokenException
         except jwt.InvalidTokenError:
