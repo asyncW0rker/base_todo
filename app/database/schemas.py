@@ -126,3 +126,7 @@ class UserOutput(BaseModel):
     id: int
     username: str
     todos: list[ToDoOutput]
+
+
+class AuthData(UserBase):
+    pass

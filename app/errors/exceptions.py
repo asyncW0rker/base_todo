@@ -27,6 +27,7 @@ HTTPValueError = HTTPBadRequest(detail="Invalid value")
 HTTPNotAuthException = partial(HTTPException, status_code=status.HTTP_401_UNAUTHORIZED)
 HTTPExpiredTokenException = HTTPNotAuthException(detail="Expired token")
 HTTPInvalidTokenException = HTTPNotAuthException(detail="Invalid token")
+HTTPWrongCredentialsException = HTTPNotAuthException(detail="Wrong credentials")
 
 
 HTTPNotFoundException = partial(HTTPException, status_code=status.HTTP_404_NOT_FOUND)

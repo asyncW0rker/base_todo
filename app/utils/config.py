@@ -1,5 +1,3 @@
-from dataclasses import dataclass, field
-
 from dotenv import find_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
