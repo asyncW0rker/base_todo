@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,3 +35,8 @@ class AuthService:
         return {
             "access_token": token,
         }
+
+
+@lru_cache
+def get_auth_service():
+    return AuthService()

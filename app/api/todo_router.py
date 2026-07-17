@@ -1,12 +1,14 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBasicCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams, \
     ToDoAnalyticsFilterParams, ToDoStatusUpdate
 from app.services.todo_service import ToDoService, get_todo_service
+from app.utils.security import oauth_scheme
 
 
 router = APIRouter(prefix="/todos", tags=["todos"])
@@ -15,6 +17,7 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 @router.get(
     "/",
     response_model=list[ToDoOutput],
+    dependencies=[Depends(oauth_scheme),]
 )
 async def get_todos(
     ordering_params: Annotated[ToDoOrderingParams, Depends()],
