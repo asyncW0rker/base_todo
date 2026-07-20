@@ -31,9 +31,10 @@ class AuthService:
         payload = {
             "sub": str(user.id),
         }
-        token = self.jwt_manager.create_access_token(payload)
+        access_token, refresh_token = self.jwt_manager.create_token_pair(payload)
         return {
-            "access_token": token,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
         }
 
 
