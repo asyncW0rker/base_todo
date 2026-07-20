@@ -1,12 +1,13 @@
 import datetime as dt
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
 from app.database.schemas import AuthData
-from app.errors.exceptions import HTTPWrongCredentialsException
+from app.errors.exceptions import HTTPWrongCredentialsException, HTTPExpiredTokenException, HTTPInvalidTokenException
 from app.repos.token_repo import TokenRepository
 from app.repos.user_repo import UserRepository
 from app.utils.config import settings
@@ -61,6 +62,30 @@ class AuthService:
         access_token, refresh_token = self.jwt_manager.create_token_pair(payload)
 
         await self._add_refresh_token_to_db(session, refresh_token, user.id)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
+
+    async def refresh(self, session: AsyncSession, refresh_token: str):
+        token_hash = self.jwt_manager.hash_refresh_token(refresh_token)
+        token = await self.token_repo.get_one_by_hash(session, token_hash)
+        if not token:
+            raise HTTPInvalidTokenException
+
+        current_time = dt.datetime.now(dt.UTC)
+        if token.expires_at <= current_time:
+            raise HTTPExpiredTokenException
+
+        user_id, token_id = token.user_id, token.id
+        payload = {
+            "sub": str(user_id),
+        }
+        access_token, refresh_token = self.jwt_manager.create_token_pair(payload)
+
+        await self.token_repo.delete_one_uncommited(session, token_id)
+        await self._add_refresh_token_to_db(session, refresh_token, user_id)
 
         return {
             "access_token": access_token,
