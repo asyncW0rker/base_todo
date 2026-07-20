@@ -28,3 +28,13 @@ class ToDo(Base):
 
     user_id: Mapped[int | None] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=True)
     user: Mapped[User] = relationship(back_populates="todos")
+
+
+class Token(Base):
+    __tablename__ = "tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    refresh_token: Mapped[str]
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    expires_at: Mapped[datetime] = mapped_column(nullable=True)
