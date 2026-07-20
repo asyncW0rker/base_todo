@@ -32,7 +32,7 @@ class JWTManager:
     def create_access_token(payload_data: dict[str, Any]) -> str:
         payload = deepcopy(payload_data)
         current_time = dt.datetime.now(dt.UTC)
-        expire_time = current_time + dt.timedelta(seconds=settings.security.JWT_EXPIRE_SECONDS)
+        expire_time = current_time + dt.timedelta(seconds=settings.security.JWT_ACCESS_EXPIRE_SECONDS)
         payload.update({
             "exp": expire_time,
         })

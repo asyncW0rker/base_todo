@@ -21,7 +21,8 @@ class SecuritySettings(BaseSettings):
 
     DUMMY_HASH: str
     JWT_SECRET: str
-    JWT_EXPIRE_SECONDS: int
+    JWT_ACCESS_EXPIRE_SECONDS: int
+    JWT_REFRESH_EXPIRE_SECONDS: int
 
 
 class Settings(BaseSettings):
