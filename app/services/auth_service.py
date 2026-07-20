@@ -29,9 +29,9 @@ class AuthService:
             raise HTTPWrongCredentialsException
 
         payload = {
-            "sub": user.id,
+            "sub": str(user.id),
         }
-        token = self.jwt_manager.create_token(payload)
+        token = self.jwt_manager.create_access_token(payload)
         return {
             "access_token": token,
         }

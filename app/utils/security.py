@@ -1,4 +1,6 @@
 import datetime as dt
+import hashlib
+import secrets
 from copy import deepcopy
 from typing import Any
 
@@ -27,7 +29,7 @@ class PasswordManager:
 
 class JWTManager:
     @staticmethod
-    def create_token(payload_data: dict[str, Any]) -> str:
+    def create_access_token(payload_data: dict[str, Any]) -> str:
         payload = deepcopy(payload_data)
         current_time = dt.datetime.now(dt.UTC)
         expire_time = current_time + dt.timedelta(seconds=settings.security.JWT_EXPIRE_SECONDS)
@@ -37,7 +39,21 @@ class JWTManager:
         return jwt.encode(payload, settings.security.JWT_SECRET, algorithm="HS256")
 
     @staticmethod
-    def decode_token(token: str) -> dict[str, Any]:
+    def create_refresh_token() -> str:
+        return secrets.token_urlsafe(32)
+
+    @staticmethod
+    def hash_refresh_token(refresh_token: str) -> str:
+        return hashlib.sha256(refresh_token.encode()).hexdigest()
+
+    @classmethod
+    def create_token_pair(cls, payload_data: dict[str, Any]) -> tuple[str, str]:
+        access_token = cls.create_access_token(payload_data)
+        refresh_token = cls.create_refresh_token()
+        return access_token, refresh_token
+
+    @staticmethod
+    def decode_access_token(token: str) -> dict[str, Any]:
         try:
             return jwt.decode(token, settings.security.JWT_SECRET, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
