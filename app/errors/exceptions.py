@@ -33,6 +33,7 @@ HTTPWrongCredentialsException = HTTPNotAuthException(detail="Wrong credentials")
 HTTPNotFoundException = partial(HTTPException, status_code=status.HTTP_404_NOT_FOUND)
 HTTPUserNotFoundException = HTTPNotFoundException(detail="User not found")
 HTTPToDoNotFoundException = HTTPNotFoundException(detail="ToDo not found")
+HTTPTokenNotFoundException = HTTPNotFoundException(detail="Token not found")
 
 
 HTTPAlreadyExistsException = partial(HTTPException, status_code=status.HTTP_409_CONFLICT)

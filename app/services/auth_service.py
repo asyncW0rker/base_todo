@@ -1,13 +1,13 @@
 import datetime as dt
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
 from app.database.schemas import AuthData
-from app.errors.exceptions import HTTPWrongCredentialsException, HTTPExpiredTokenException, HTTPInvalidTokenException
+from app.errors.exceptions import HTTPWrongCredentialsException, HTTPExpiredTokenException, HTTPInvalidTokenException, \
+    HTTPTokenNotFoundException
 from app.repos.token_repo import TokenRepository
 from app.repos.user_repo import UserRepository
 from app.utils.config import settings
@@ -37,11 +37,8 @@ class AuthService:
         return user
 
     async def _add_refresh_token_to_db(
-        self,
-        session: AsyncSession,
-        refresh_token: str,
-        user_id: int,
-    ):
+        self, session: AsyncSession, refresh_token: str, user_id: int,
+    ) -> None:
         refresh_hash = self.jwt_manager.hash_refresh_token(refresh_token)
         expires_at = dt.datetime.now(dt.UTC) + dt.timedelta(seconds=settings.security.JWT_REFRESH_EXPIRE_SECONDS)
         await self.token_repo.create_one(
@@ -91,6 +88,13 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": refresh_token,
         }
+
+    async def revoke_token(self, session: AsyncSession, user_id: int):
+        deleted_count = await self.token_repo.delete_one_by_user_id(session, user_id)
+        if deleted_count == 0:
+            raise HTTPTokenNotFoundException
+
+        return {"message": f"Tokens deleted: {deleted_count}"}
 
 
 @lru_cache
