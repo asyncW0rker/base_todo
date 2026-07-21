@@ -71,11 +71,13 @@ class AuthService:
         if not token:
             raise HTTPInvalidTokenException
 
+        user_id, token_id = token.user_id, token.id
         current_time = dt.datetime.now(dt.UTC)
+
         if token.expires_at <= current_time:
+            await self.token_repo.delete_one(session, token_id)
             raise HTTPExpiredTokenException
 
-        user_id, token_id = token.user_id, token.id
         payload = {
             "sub": str(user_id),
         }
