@@ -1,10 +1,11 @@
 import datetime as dt
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
+from app.database.schemas import UserRole
 
 
 class User(Base):
@@ -13,6 +14,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str]
     password: Mapped[str]
+    role: Mapped[str] = mapped_column(Enum(UserRole), default=UserRole.USER)
 
     todos: Mapped[list["ToDo"]] = relationship(back_populates="user")
 

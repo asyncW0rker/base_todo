@@ -112,6 +112,7 @@ class ToDoStatusUpdate(BaseModel):
 class UserBase(BaseModel):
     username: str
     password: str
+    role: UserRole = UserRole.USER
 
 
 class UserCreate(UserBase):
@@ -125,6 +126,7 @@ class UserUpdate(UserBase):
 class UserOutput(BaseModel):
     id: int
     username: str
+    role: UserRole
 
 
 class UserWithTodos(UserOutput):
