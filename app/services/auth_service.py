@@ -5,7 +5,7 @@ from functools import lru_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
-from app.database.schemas import AuthData
+from app.database.schemas import AuthData, RefreshToken
 from app.errors.exceptions import HTTPWrongCredentialsException, HTTPExpiredTokenException, HTTPInvalidTokenException, \
     HTTPTokenNotFoundException
 from app.repos.token_repo import TokenRepository
@@ -65,8 +65,8 @@ class AuthService:
             "refresh_token": refresh_token,
         }
 
-    async def refresh(self, session: AsyncSession, refresh_token: str):
-        token_hash = self.jwt_manager.hash_refresh_token(refresh_token)
+    async def refresh(self, session: AsyncSession, refresh_data: RefreshToken):
+        token_hash = self.jwt_manager.hash_refresh_token(refresh_data.token)
         token = await self.token_repo.get_one_by_hash(session, token_hash)
         if not token:
             raise HTTPInvalidTokenException

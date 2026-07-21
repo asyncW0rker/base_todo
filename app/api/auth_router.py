@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
-from app.database.schemas import AuthData
+from app.database.schemas import AuthData, RefreshToken
 from app.services.auth_service import AuthService, get_auth_service
 
 
@@ -16,3 +16,12 @@ async def authenticate_user(
     auth_service: AuthService = Depends(get_auth_service),
 ):
     return await auth_service.authenticate(session, auth_data)
+
+
+@router.post("/refresh")
+async def refresh_token(
+    refresh_data: RefreshToken,
+    session: AsyncSession = Depends(get_session),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    return await auth_service.refresh(session, refresh_data)

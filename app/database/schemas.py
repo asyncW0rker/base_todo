@@ -133,3 +133,7 @@ class UserWithTodos(UserOutput):
 
 class AuthData(UserBase):
     pass
+
+
+class RefreshToken(BaseModel):
+    token: str
