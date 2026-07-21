@@ -1,4 +1,4 @@
-from datetime import datetime, date
+import datetime as dt
 
 import pytz
 from pydantic import BaseModel, Field, computed_field, field_validator
@@ -35,8 +35,8 @@ class ToDoUpdate(ToDoBase):
     completed: bool
 
     @computed_field
-    def completed_at(self) -> datetime | None:
-        return datetime.now() if self.completed else None
+    def completed_at(self) -> dt.datetime | None:
+        return dt.datetime.now(dt.UTC) if self.completed else None
 
 
 class ToDoOutput(BaseModel):
@@ -44,8 +44,8 @@ class ToDoOutput(BaseModel):
     title: str
     description: str
     completed: bool
-    completed_at: datetime | None
-    created_at: datetime
+    completed_at: dt.datetime | None
+    created_at: dt.datetime
     user_id: int | None
 
 
@@ -59,8 +59,8 @@ class ToDoOrderingParams(BaseOrderingParams):
 class ToDoFilterParams(BaseFilterParams):
     completed: bool | None = None
     title_contains: str | None = None
-    created_after: date | None = None
-    created_before: date | None = None
+    created_after: dt.date | None = None
+    created_before: dt.date | None = None
 
 
 class ToDoAnalyticsFilterParams(BaseFilterParams):
@@ -97,8 +97,8 @@ class ToDoStatusUpdate(BaseModel):
     completed: bool = True
 
     @computed_field
-    def completed_at(self) -> datetime | None:
-        return datetime.now() if self.completed else None
+    def completed_at(self) -> dt.datetime | None:
+        return dt.datetime.now(dt.UTC) if self.completed else None
 
     @field_validator("ids")
     @classmethod
