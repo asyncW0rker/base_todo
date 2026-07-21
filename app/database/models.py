@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
@@ -37,4 +38,4 @@ class Token(Base):
     refresh_token: Mapped[str]
     user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"))
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-    expires_at: Mapped[datetime] = mapped_column(nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True),nullable=True)

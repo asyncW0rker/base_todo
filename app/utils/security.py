@@ -40,7 +40,7 @@ class JWTManager:
 
     @staticmethod
     def create_refresh_token() -> str:
-        return secrets.token_urlsafe(32)
+        return secrets.token_urlsafe(64)
 
     @staticmethod
     def hash_refresh_token(refresh_token: str) -> str:
