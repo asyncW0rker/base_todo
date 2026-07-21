@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime as dt
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import TIMESTAMP
@@ -24,8 +24,10 @@ class ToDo(Base):
     title: Mapped[str]
     description: Mapped[str]
     completed: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-    completed_at: Mapped[datetime] = mapped_column(nullable=True)
+    created_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now)
+    updated_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now, onupdate=dt.datetime.now)
+    completed_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    version: Mapped[int] = mapped_column(default=1)
 
     user_id: Mapped[int | None] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=True)
     user: Mapped[User] = relationship(back_populates="todos")
@@ -37,5 +39,5 @@ class Token(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     refresh_token: Mapped[str]
     user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"))
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-    expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True),nullable=True)
+    created_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now)
+    expires_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
