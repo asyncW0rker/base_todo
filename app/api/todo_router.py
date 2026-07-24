@@ -8,7 +8,6 @@ from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderin
     ToDoAnalyticsFilterParams, ToDoStatusUpdate, UserRole
 from app.services.todo_service import ToDoService, get_todo_service
 from app.utils.rbac import role_permission_required
-from app.utils.security import oauth_scheme
 
 
 router = APIRouter(prefix="/todos", tags=["todos"])
