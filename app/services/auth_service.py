@@ -1,13 +1,14 @@
 import datetime as dt
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
 from app.database.schemas import AuthData, RefreshToken
 from app.errors.exceptions import HTTPWrongCredentialsException, HTTPExpiredTokenException, HTTPInvalidTokenException, \
-    HTTPTokenNotFoundException
+    HTTPTokenNotFoundException, JWTExpiredTokenException, JWTInvalidTokenException
 from app.repos.token_repo import TokenRepository
 from app.repos.user_repo import UserRepository
 from app.utils.config import settings
@@ -97,6 +98,14 @@ class AuthService:
             raise HTTPTokenNotFoundException
 
         return {"message": f"Tokens deleted: {deleted_count}"}
+
+    def decode_access_token(self, access_token: str) -> dict[str, Any]:
+        try:
+            return self.jwt_manager.decode_access_token(access_token)
+        except JWTExpiredTokenException:
+            raise HTTPExpiredTokenException
+        except JWTInvalidTokenException:
+            raise HTTPInvalidTokenException
 
 
 @lru_cache
