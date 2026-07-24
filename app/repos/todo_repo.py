@@ -1,4 +1,5 @@
 from typing import Sequence, Any
+import datetime as dt
 
 import pytz
 from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case
@@ -102,9 +103,9 @@ class ToDoRepository(BaseRepository):
         result = await session.execute(query)
         rows = result.all()
 
-        total_count = rows[0].total_count if rows else 0
-        completed_count = rows[0].completed_count if rows else 0
-        average_completed = rows[0].average_completed if rows else 0
+        total_count = rows[0].total_count if rows and rows[0].total_count else 0
+        completed_count = rows[0].completed_count if rows and rows[0].completed_count else 0
+        average_completed = rows[0].average_completed if rows and rows[0].average_completed else dt.timedelta(seconds=0)
         avg_completion_time_hours = round(average_completed.total_seconds() / 3600, 2)
 
         try:

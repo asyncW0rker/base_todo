@@ -5,8 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams, \
-    ToDoAnalyticsFilterParams, ToDoStatusUpdate
+    ToDoAnalyticsFilterParams, ToDoStatusUpdate, UserRole
 from app.services.todo_service import ToDoService, get_todo_service
+from app.utils.rbac import role_permission_required
 from app.utils.security import oauth_scheme
 
 
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 @router.get(
     "/",
     response_model=list[ToDoOutput],
-    dependencies=[Depends(oauth_scheme),]
+    dependencies=[Depends(role_permission_required(UserRole.ADMIN)),]
 )
 async def get_todos(
     ordering_params: Annotated[ToDoOrderingParams, Depends()],
@@ -31,7 +32,10 @@ async def get_todos(
     )
 
 
-@router.get("/analytics")
+@router.get(
+    "/analytics",
+    dependencies=[Depends(role_permission_required(UserRole.MANAGER)),]
+)
 async def get_todos_analytics(
     filter_params: Annotated[ToDoAnalyticsFilterParams, Depends()],
     session: AsyncSession = Depends(get_session),
