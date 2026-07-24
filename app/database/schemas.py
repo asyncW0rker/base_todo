@@ -112,14 +112,17 @@ class ToDoStatusUpdate(BaseModel):
 class UserBase(BaseModel):
     username: str
     password: str
+
+
+class UserWithRole(UserBase):
     role: UserRole = UserRole.USER
 
 
-class UserCreate(UserBase):
+class UserCreate(UserWithRole):
     pass
 
 
-class UserUpdate(UserBase):
+class UserUpdate(UserWithRole):
     pass
 
 
