@@ -30,6 +30,11 @@ HTTPInvalidTokenException = HTTPNotAuthException(detail="Invalid token")
 HTTPWrongCredentialsException = HTTPNotAuthException(detail="Wrong credentials")
 
 
+HTTPForbiddenException = partial(HTTPException, status_code=status.HTTP_403_FORBIDDEN)
+HTTPRolePermissionDeniedException = HTTPForbiddenException(detail="Permission denied")
+HTTPPrivatePermissionDeniedException = HTTPForbiddenException(detail="Permission denied")
+
+
 HTTPNotFoundException = partial(HTTPException, status_code=status.HTTP_404_NOT_FOUND)
 HTTPUserNotFoundException = HTTPNotFoundException(detail="User not found")
 HTTPToDoNotFoundException = HTTPNotFoundException(detail="ToDo not found")
