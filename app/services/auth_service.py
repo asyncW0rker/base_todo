@@ -56,6 +56,7 @@ class AuthService:
 
         payload = {
             "sub": str(user.id),
+            "role": user.role,
         }
         access_token, refresh_token = self.jwt_manager.create_token_pair(payload)
 
