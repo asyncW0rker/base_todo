@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.db import get_session
 from app.database.schemas import UserCreate, UserOutput, UserUpdate, UserWithTodos
 from app.services.user_service import UserService, get_user_service
-
+from app.utils.rbac import private_user_permission_required
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -23,6 +23,7 @@ async def get_users(
 @router.get(
     "/{user_id}",
     response_model=UserWithTodos,
+    dependencies=[Depends(private_user_permission_required)]
 )
 async def get_user(
     user_id: int,
