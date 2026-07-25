@@ -21,7 +21,7 @@ class BaseRepository:
 
     def _add_filter_params(
         self,
-        query: GenerativeSelect,
+        query: GenerativeSelect | Executable,
         filter_params: dict[str, Any],
     ) -> GenerativeSelect | Executable:
         for key, val in filter_params.items():
@@ -44,22 +44,34 @@ class BaseRepository:
         result = await session.execute(select(self.model))
         return result.scalars().all()
 
-    async def update_one(self, session: AsyncSession, item_id: int, update_data: dict[str, Any]) -> int:
+    async def update_one(
+        self, session: AsyncSession, item_id: int, filter_params: dict[str, Any], update_data: dict[str, Any]
+    ) -> int:
         query = (
             update(self.model)
             .where(self.model.id == item_id)
-            .values(**update_data)
         )
+
+        if filter_params:
+            query = self._add_filter_params(query, filter_params)
+
+        query = query.values(**update_data)
         result = await session.execute(query)
         await session.commit()
         return result.rowcount
 
-    async def update_many(self, session: AsyncSession, items_ids: list[int], update_data: dict[str, Any]) -> int:
+    async def update_many(
+        self, session: AsyncSession, items_ids: list[int], filter_params: dict[str, Any], update_data: dict[str, Any]
+    ) -> int:
         query = (
             update(self.model)
             .where(self.model.id.in_(items_ids))
-            .values(**update_data)
         )
+
+        if filter_params:
+            query = self._add_filter_params(query, filter_params)
+
+        query = query.values(**update_data)
         result = await session.execute(query)
         await session.commit()
         return result.rowcount
