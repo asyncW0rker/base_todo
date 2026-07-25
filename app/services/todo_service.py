@@ -23,6 +23,13 @@ class ToDoService:
         if user is None:
             raise HTTPUserNotFoundException
 
+    @staticmethod
+    def _get_filter_params_from_user_data(user_data: dict[str, Any]) -> dict[str, Any]:
+        user_role, user_id = user_data.get("role"), int(user_data.get("sub"))
+        filter_params = {"user_id": user_id} if user_role == UserRole.USER else {}
+        return filter_params
+
+
     async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDo:
         if creation_data.user_id is not None:
             await self._check_user_existence(session, creation_data.user_id)
@@ -74,11 +81,9 @@ class ToDoService:
         if update_data.user_id is not None:
             await self._check_user_existence(session, update_data.user_id)
 
-        user_role, user_id = current_user_info.get("role"), int(current_user_info.get("sub"))
-        user_id = user_id if user_role == UserRole.USER else None
-
-        changed_todos_count = await self.repo.update_one_with_user_id(
-            session=session, item_id=todo_id, user_id=user_id, update_data=update_data.model_dump()
+        filter_params = self._get_filter_params_from_user_data(current_user_info)
+        changed_todos_count = await self.repo.update_one(
+            session=session, item_id=todo_id, filter_params=filter_params, update_data=update_data.model_dump()
         )
         if changed_todos_count == 0:
             raise HTTPToDoNotFoundException
@@ -89,8 +94,10 @@ class ToDoService:
     ):
         update_data_dict = update_data.model_dump()
         todos_ids = update_data_dict.pop("ids")
+        filter_params = self._get_filter_params_from_user_data(current_user_info)
+
         changed_todos_count = await self.repo.update_many(
-            session=session, items_ids=todos_ids, update_data=update_data_dict
+            session=session, items_ids=todos_ids, filter_params=filter_params, update_data=update_data_dict
         )
         return {
             "updated_count": changed_todos_count
