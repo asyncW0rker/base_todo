@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
-    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate
+    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate, UserRole
 from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPInvalidTimezoneException
 from app.repos.todo_repo import ToDoRepository
@@ -42,11 +43,16 @@ class ToDoService:
         session: AsyncSession,
         ordering_params: ToDoOrderingParams,
         filter_params: ToDoFilterParams,
+        current_user_info: dict[str, Any],
     ):
+        filter_params_dict = filter_params.model_dump()
+        if current_user_info["role"] == UserRole.USER:
+            filter_params_dict["user_id"] = current_user_info["user_id"]
+
         return await self.repo.get_many(
             session=session,
             ordering_params=ordering_params.model_dump(),
-            filter_params=filter_params.model_dump(),
+            filter_params=filter_params_dict,
         )
 
     async def get_analytics(

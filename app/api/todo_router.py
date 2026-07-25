@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +8,7 @@ from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderin
     ToDoAnalyticsFilterParams, ToDoStatusUpdate, UserRole
 from app.services.todo_service import ToDoService, get_todo_service
 from app.utils.dependencies import admin_role_required, auth_required, user_ownership_required, manager_role_required
-
+from app.utils.utils import get_current_user_payload
 
 router = APIRouter(prefix="/todos", tags=["todos"])
 
@@ -21,6 +21,7 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 async def get_todos(
     ordering_params: Annotated[ToDoOrderingParams, Depends()],
     filter_params: Annotated[ToDoFilterParams, Depends()],
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
@@ -28,6 +29,7 @@ async def get_todos(
         session=session,
         ordering_params=ordering_params,
         filter_params=filter_params,
+        current_user_info=current_user_info,
     )
 
 
