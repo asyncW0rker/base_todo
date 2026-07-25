@@ -29,8 +29,3 @@ def private_user_permission_required(
     user_role = payload.get("role")
     if user_id != user_id_from_token and user_role != UserRole.ADMIN:
         raise HTTPPrivatePermissionDeniedException
-
-
-admin_role_required = Depends(role_permission_required(UserRole.ADMIN))
-manager_role_required = Depends(role_permission_required(UserRole.MANAGER))
-user_ownership_required = Depends(private_user_permission_required)

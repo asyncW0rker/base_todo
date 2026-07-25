@@ -7,7 +7,7 @@ from app.database.db import get_session
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams, \
     ToDoAnalyticsFilterParams, ToDoStatusUpdate, UserRole
 from app.services.todo_service import ToDoService, get_todo_service
-from app.utils.rbac import role_permission_required
+from app.utils.dependencies import admin_role_required, auth_required, user_ownership_required, manager_role_required
 
 
 router = APIRouter(prefix="/todos", tags=["todos"])
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 @router.get(
     "/",
     response_model=list[ToDoOutput],
-    dependencies=[Depends(role_permission_required(UserRole.ADMIN)),]
+    dependencies=[auth_required]
 )
 async def get_todos(
     ordering_params: Annotated[ToDoOrderingParams, Depends()],
@@ -33,7 +33,7 @@ async def get_todos(
 
 @router.get(
     "/analytics",
-    dependencies=[Depends(role_permission_required(UserRole.MANAGER)),]
+    dependencies=[manager_role_required],
 )
 async def get_todos_analytics(
     filter_params: Annotated[ToDoAnalyticsFilterParams, Depends()],
@@ -46,6 +46,7 @@ async def get_todos_analytics(
 @router.get(
     "/{todo_id}",
     response_model=ToDoOutput,
+    dependencies=[user_ownership_required],
 )
 async def get_todo(
     todo_id: int,
@@ -58,6 +59,7 @@ async def get_todo(
 @router.post(
     "/",
     response_model=ToDoOutput,
+    dependencies=[auth_required],
 )
 async def create_todo(
     todo_data: ToDoCreate,
