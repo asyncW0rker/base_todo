@@ -48,14 +48,15 @@ async def get_todos_analytics(
 @router.get(
     "/{todo_id}",
     response_model=ToDoOutput,
-    dependencies=[user_ownership_required],
+    dependencies=[auth_required],
 )
 async def get_todo(
     todo_id: int,
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
-    return await todo_service.get_todo(session, todo_id)
+    return await todo_service.get_todo(session, todo_id, current_user_info)
 
 
 @router.post(

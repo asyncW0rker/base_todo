@@ -29,10 +29,14 @@ class ToDoService:
 
         return await self.repo.create_one(session, creation_data.model_dump())
 
-    async def get_todo(self, session: AsyncSession, todo_id: int) -> ToDo | None:
+    async def get_todo(self, session: AsyncSession, todo_id: int, current_user_info: dict[str, Any]) -> ToDo | None:
         todo = await self.repo.get_one(session, todo_id)
         if todo is None:
             raise HTTPToDoNotFoundException
+
+        if current_user_info["role"] == UserRole.USER and todo.user_id != int(current_user_info["sub"]):
+            raise HTTPToDoNotFoundException
+
         return todo
 
     async def get_all_todos(self, session: AsyncSession):
@@ -47,7 +51,7 @@ class ToDoService:
     ):
         filter_params_dict = filter_params.model_dump()
         if current_user_info["role"] == UserRole.USER:
-            filter_params_dict["user_id"] = current_user_info["user_id"]
+            filter_params_dict["user_id"] = int(current_user_info["sub"])
 
         return await self.repo.get_many(
             session=session,
