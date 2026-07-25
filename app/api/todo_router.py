@@ -62,7 +62,7 @@ async def get_todo(
 @router.post(
     "/",
     response_model=ToDoOutput,
-    dependencies=[auth_required],
+    dependencies=[manager_role_required],
 )
 async def create_todo(
     todo_data: ToDoCreate,
@@ -91,7 +91,10 @@ async def update_status_for_todos(
     return await todo_service.update_status_for_todos(session, todo_data)
 
 
-@router.delete("/{todo_id}")
+@router.delete(
+    "/{todo_id}",
+    dependencies=[manager_role_required],
+)
 async def delete_todo(
     todo_id: int,
     session: AsyncSession = Depends(get_session),
@@ -100,7 +103,10 @@ async def delete_todo(
     return await todo_service.delete_todo(session, todo_id)
 
 
-@router.delete("/")
+@router.delete(
+    "/",
+    dependencies=[admin_role_required],
+)
 async def delete_todos(
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
