@@ -72,23 +72,31 @@ async def create_todo(
     return await todo_service.create_todo(session, todo_data)
 
 
-@router.put("/{todo_id}")
+@router.put(
+    "/{todo_id}",
+    dependencies=[auth_required],
+)
 async def update_todo(
     todo_id: int,
     todo_data: ToDoUpdate,
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
-    return await todo_service.update_todo(session, todo_id, todo_data)
+    return await todo_service.update_todo(session, todo_id, todo_data, current_user_info)
 
 
-@router.patch("/")
+@router.patch(
+    "/",
+    dependencies=[auth_required],
+)
 async def update_status_for_todos(
     todo_data: ToDoStatusUpdate = Depends(),
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
-    return await todo_service.update_status_for_todos(session, todo_data)
+    return await todo_service.update_status_for_todos(session, todo_data, current_user_info)
 
 
 @router.delete(

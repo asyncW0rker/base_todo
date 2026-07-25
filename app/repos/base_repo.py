@@ -19,6 +19,17 @@ class BaseRepository:
     ) -> GenerativeSelect | Executable:
         return query.limit(limit).offset(offset)
 
+    def _add_filter_params(
+        self,
+        query: GenerativeSelect,
+        filter_params: dict[str, Any],
+    ) -> GenerativeSelect | Executable:
+        for key, val in filter_params.items():
+            if val is not None and hasattr(self.model, key):
+                query = query.where(getattr(self.model, key) == val)
+
+        return query
+
     async def create_one(self, session: AsyncSession, creation_data: dict[str, Any]) -> Any:
         new_object = self.model(**creation_data)
         session.add(new_object)

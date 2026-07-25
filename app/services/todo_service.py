@@ -68,16 +68,25 @@ class ToDoService:
         except TimezoneException:
             raise HTTPInvalidTimezoneException
 
-    async def update_todo(self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate):
+    async def update_todo(
+        self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate, current_user_info: dict[str, Any],
+    ):
         if update_data.user_id is not None:
             await self._check_user_existence(session, update_data.user_id)
 
-        changed_todos_count = await self.repo.update_one(session, todo_id, update_data.model_dump())
+        user_role, user_id = current_user_info.get("role"), int(current_user_info.get("sub"))
+        user_id = user_id if user_role == UserRole.USER else None
+
+        changed_todos_count = await self.repo.update_one_with_user_id(
+            session=session, item_id=todo_id, user_id=user_id, update_data=update_data.model_dump()
+        )
         if changed_todos_count == 0:
             raise HTTPToDoNotFoundException
         return {"message": "ToDo updated"}
 
-    async def update_status_for_todos(self, session: AsyncSession, update_data: ToDoStatusUpdate):
+    async def update_status_for_todos(
+        self, session: AsyncSession, update_data: ToDoStatusUpdate, current_user_info: dict[str, Any],
+    ):
         update_data_dict = update_data.model_dump()
         todos_ids = update_data_dict.pop("ids")
         changed_todos_count = await self.repo.update_many(

@@ -2,7 +2,7 @@ from typing import Sequence, Any
 import datetime as dt
 
 import pytz
-from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case
+from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case, update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -125,4 +125,20 @@ class ToDoRepository(BaseRepository):
             "avg_completion_time_hours": avg_completion_time_hours,
             "weekday_distribution": weekday_distribution,
         }
+
+    async def update_one_with_user_id(
+        self, session: AsyncSession, item_id: int, user_id: int | None, update_data: dict[str, Any]
+    ) -> int:
+        query = (
+            update(self.model)
+            .where(self.model.id == item_id)
+            .values(**update_data)
+        )
+
+        if user_id is not None:
+            query = query.where(self.model.user_id == user_id)
+
+        result = await session.execute(query)
+        await session.commit()
+        return result.rowcount
 
