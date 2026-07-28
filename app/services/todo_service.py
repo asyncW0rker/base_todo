@@ -25,10 +25,9 @@ class ToDoService:
 
     @staticmethod
     def _get_filter_params_from_user_data(user_data: dict[str, Any]) -> dict[str, Any]:
-        user_role, user_id = user_data.get("role"), int(user_data.get("sub"))
-        filter_params = {"user_id": user_id} if user_role == UserRole.USER else {}
+        user_role, user_id = user_data.get("role"), user_data.get("sub")
+        filter_params = {"user_id": int(user_id)} if user_role == UserRole.USER else {}
         return filter_params
-
 
     async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDo:
         if creation_data.user_id is not None:
@@ -41,7 +40,7 @@ class ToDoService:
         if todo is None:
             raise HTTPToDoNotFoundException
 
-        if current_user_info["role"] == UserRole.USER and todo.user_id != int(current_user_info["sub"]):
+        if current_user_info.get("role") == UserRole.USER and todo.user_id != int(current_user_info.get("sub")):
             raise HTTPToDoNotFoundException
 
         return todo
@@ -57,8 +56,8 @@ class ToDoService:
         current_user_info: dict[str, Any],
     ):
         filter_params_dict = filter_params.model_dump()
-        if current_user_info["role"] == UserRole.USER:
-            filter_params_dict["user_id"] = int(current_user_info["sub"])
+        if current_user_info.get("role") == UserRole.USER:
+            filter_params_dict["user_id"] = int(current_user_info.get("sub"))
 
         return await self.repo.get_many(
             session=session,
@@ -87,6 +86,7 @@ class ToDoService:
         )
         if changed_todos_count == 0:
             raise HTTPToDoNotFoundException
+
         return {"message": "ToDo updated"}
 
     async def update_status_for_todos(
