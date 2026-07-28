@@ -8,7 +8,7 @@ from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
     ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate, UserRole
 from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
-    HTTPInvalidTimezoneException
+    HTTPInvalidTimezoneException, HTTPToDoVersionMismatchException
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
 
@@ -81,13 +81,18 @@ class ToDoService:
             await self._check_user_existence(session, update_data.user_id)
 
         filter_params = self._get_filter_params_from_user_data(current_user_info)
-        changed_todos_count = await self.repo.update_one(
+        filter_params["version"] = update_data.version
+        update_data.version += 1
+
+        changed_todo = await self.repo.update_one(
             session=session, item_id=todo_id, filter_params=filter_params, update_data=update_data.model_dump()
         )
-        if changed_todos_count == 0:
-            raise HTTPToDoNotFoundException
 
-        return {"message": "ToDo updated"}
+        if changed_todo is None:
+            todo = await self.get_todo(session, todo_id, current_user_info)
+            raise HTTPToDoVersionMismatchException(detail=f"Actual version for ToDo is {todo.version}")
+
+        return changed_todo
 
     async def update_status_for_todos(
         self, session: AsyncSession, update_data: ToDoStatusUpdate, current_user_info: dict[str, Any],

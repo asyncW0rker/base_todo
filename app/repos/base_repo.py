@@ -1,5 +1,6 @@
 from typing import Any
 
+from fastapi import HTTPException
 from sqlalchemy import select, Sequence, delete, update, GenerativeSelect, desc, Executable
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,10 +56,14 @@ class BaseRepository:
         if filter_params:
             query = self._add_filter_params(query, filter_params)
 
-        query = query.values(**update_data)
+        query = (
+            query
+            .values(**update_data)
+            .returning(self.model)
+        )
         result = await session.execute(query)
         await session.commit()
-        return result.rowcount
+        return result.scalar_one_or_none()
 
     async def update_many(
         self, session: AsyncSession, items_ids: list[int], filter_params: dict[str, Any], update_data: dict[str, Any]

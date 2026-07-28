@@ -33,6 +33,7 @@ class ToDoCreate(ToDoBase):
 
 class ToDoUpdate(ToDoBase):
     completed: bool
+    version: int
 
     @computed_field
     def completed_at(self) -> dt.datetime | None:
@@ -46,6 +47,8 @@ class ToDoOutput(BaseModel):
     completed: bool
     completed_at: dt.datetime | None
     created_at: dt.datetime
+    updated_at: dt.datetime
+    version: int
     user_id: int | None
 
 

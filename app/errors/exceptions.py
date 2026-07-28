@@ -41,6 +41,7 @@ HTTPToDoNotFoundException = HTTPNotFoundException(detail="ToDo not found")
 HTTPTokenNotFoundException = HTTPNotFoundException(detail="Token not found")
 
 
-HTTPAlreadyExistsException = partial(HTTPException, status_code=status.HTTP_409_CONFLICT)
-HTTPUserAlreadyExistsException = HTTPAlreadyExistsException(detail="User already exists")
-HTTPToDoAlreadyExistsException = HTTPAlreadyExistsException(detail="ToDo already exists")
+HTTPConflictException = partial(HTTPException, status_code=status.HTTP_409_CONFLICT)
+HTTPUserAlreadyExistsException = HTTPConflictException(detail="User already exists")
+HTTPToDoAlreadyExistsException = HTTPConflictException(detail="ToDo already exists")
+HTTPToDoVersionMismatchException = HTTPConflictException
