@@ -1,7 +1,7 @@
 import datetime as dt
 
-from sqlalchemy import ForeignKey, Enum
-from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy import ForeignKey, Enum, Computed, Index, func, text
+from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
@@ -33,6 +33,26 @@ class ToDo(Base):
 
     user_id: Mapped[int | None] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=True)
     user: Mapped[User] = relationship(back_populates="todos")
+
+    search_vector: Mapped[TSVECTOR] = mapped_column(
+        TSVECTOR,
+        Computed(
+            "setweight(to_tsvector('russian', coalesce(title, '')), 'A') || "
+            "setweight(to_tsvector('russian', coalesce(description, '')), 'B')",
+            persisted=True
+        ),
+        nullable=True,
+    )
+
+    __table_args__ = (
+        Index("idx_todo_search", search_vector, postgresql_using="gin"),
+        Index(
+            "idx_todo_title_trgm",
+            func.lower(text("title")).label("lower_title"),
+            postgresql_using="gin",
+            postgresql_ops={"lower_title": "gin_trgm_ops"},
+        )
+    )
 
 
 class Token(Base):
