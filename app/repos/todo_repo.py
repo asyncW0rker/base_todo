@@ -2,7 +2,7 @@ from typing import Sequence, Any
 import datetime as dt
 
 import pytz
-from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case, update
+from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,6 +55,34 @@ class ToDoRepository(BaseRepository):
 
         result = await session.execute(sorted_query)
         return result.scalars().all()
+
+    async def search(
+        self,
+        session: AsyncSession,
+        search_q: str,
+        filter_params: dict[str, Any],
+        ordering_params: dict[str, Any],
+        language: str = "russian"
+    ):
+        search_query = func.plain_to_tsquery(language, search_q)
+        limit, offset = ordering_params.get("limit", 10), ordering_params.get("offset", 0)
+        sort_by = ordering_params.get("sort_by", "-rank")
+
+        query = (
+            select(
+                self.model,
+                func.ts_rank(self.model.search_vector, search_query).label("rank"),
+            )
+            .where(self.model.search_vector.op("@@")(search_query))
+        )
+
+        filtered_query = self._add_filter_params(query, filter_params)
+        limited_query = self._add_limit_and_offset(filtered_query, limit, offset)
+        sorted_query = self._add_ordering_params(limited_query, sort_by)
+
+        result = await session.execute(sorted_query)
+        rows = result.all()
+        return [row[0] for row in rows]
 
 
     async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
