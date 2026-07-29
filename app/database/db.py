@@ -9,7 +9,7 @@ class Base(DeclarativeBase):
 
 
 engine = create_async_engine(settings.database.db_url)
-session_maker = async_sessionmaker(engine)
+session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def get_session():

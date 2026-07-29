@@ -76,6 +76,7 @@ async def create_todo(
 
 @router.put(
     "/{todo_id}",
+    response_model=ToDoOutput,
     # dependencies=[auth_required],
 )
 async def update_todo(

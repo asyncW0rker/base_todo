@@ -47,7 +47,7 @@ class BaseRepository:
 
     async def update_one(
         self, session: AsyncSession, item_id: int, filter_params: dict[str, Any], update_data: dict[str, Any]
-    ) -> int:
+    ) -> Any:
         query = (
             update(self.model)
             .where(self.model.id == item_id)

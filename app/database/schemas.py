@@ -51,6 +51,9 @@ class ToDoOutput(BaseModel):
     version: int
     user_id: int | None
 
+    class Config:
+        from_attributes = True
+
 
 ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput, ["created",])
 

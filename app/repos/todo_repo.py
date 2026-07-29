@@ -22,7 +22,7 @@ class ToDoRepository(BaseRepository):
     ) -> GenerativeSelect | Executable:
         completed, title_contains = filter_params.get("completed"),  filter_params.get("title_contains")
         created_after, created_before = filter_params.get("created_after"), filter_params.get("created_before")
-        user_id = filter_params.get("user_id")
+        user_id, version = filter_params.get("user_id"), filter_params.get("version")
         filter_conditions = []
 
         if completed is not None:
@@ -35,6 +35,8 @@ class ToDoRepository(BaseRepository):
             filter_conditions.append(self.model.created_at <= created_before)
         if user_id is not None:
             filter_conditions.append(self.model.user_id == user_id)
+        if version is not None:
+            filter_conditions.append(self.model.version == version)
 
         return query.where(and_(*filter_conditions))
 
