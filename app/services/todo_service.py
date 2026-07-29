@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
-    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate, UserRole
+    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate, UserRole, ToDoPatch
 from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPInvalidTimezoneException, HTTPToDoVersionMismatchException
 from app.repos.todo_repo import ToDoRepository
@@ -75,7 +75,10 @@ class ToDoService:
             raise HTTPInvalidTimezoneException
 
     async def update_todo(
-        self, session: AsyncSession, todo_id: int, update_data: ToDoUpdate, current_user_info: dict[str, Any],
+        self,
+        session: AsyncSession,
+        todo_id: int, update_data: ToDoUpdate | ToDoPatch,
+        current_user_info: dict[str, Any],
     ):
         if update_data.user_id is not None:
             await self._check_user_existence(session, update_data.user_id)

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams, \
-    ToDoAnalyticsFilterParams, ToDoStatusUpdate, UserRole
+    ToDoAnalyticsFilterParams, ToDoStatusUpdate, UserRole, ToDoPatch
 from app.services.todo_service import ToDoService, get_todo_service
 from app.utils.dependencies import admin_role_required, auth_required, user_ownership_required, manager_role_required
 from app.utils.utils import get_current_user_payload
@@ -82,6 +82,21 @@ async def create_todo(
 async def update_todo(
     todo_id: int,
     todo_data: ToDoUpdate,
+    # current_user_info: dict[str, Any] = Depends(get_current_user_payload),
+    session: AsyncSession = Depends(get_session),
+    todo_service: ToDoService = Depends(get_todo_service),
+):
+    return await todo_service.update_todo(session, todo_id, todo_data, {})
+
+
+@router.patch(
+"/{todo_id}",
+    response_model=ToDoOutput,
+    # dependencies=[auth_required],
+)
+async def patch_todo(
+    todo_id: int,
+    todo_data: ToDoPatch,
     # current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),

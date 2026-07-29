@@ -40,6 +40,21 @@ class ToDoUpdate(ToDoBase):
         return dt.datetime.now(dt.UTC) if self.completed else None
 
 
+class ToDoPatch(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    user_id: int | None = None
+    completed: bool | None = None
+    version: int
+
+    @computed_field
+    def completed_at(self) -> dt.datetime | None:
+        return dt.datetime.now(dt.UTC) if self.completed else None
+
+    def model_dump(self, **kwargs) -> dict:
+        return {k: v for k, v in super().model_dump(**kwargs).items() if v is not None}
+
+
 class ToDoOutput(BaseModel):
     id: int
     title: str

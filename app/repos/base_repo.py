@@ -1,6 +1,5 @@
 from typing import Any
 
-from fastapi import HTTPException
 from sqlalchemy import select, Sequence, delete, update, GenerativeSelect, desc, Executable
 from sqlalchemy.ext.asyncio import AsyncSession
 
