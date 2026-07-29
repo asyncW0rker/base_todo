@@ -20,11 +20,12 @@ class ToDoRepository(BaseRepository):
         query: GenerativeSelect,
         filter_params: dict[str, Any],
     ) -> GenerativeSelect | Executable:
-        completed, title_contains = filter_params.get("completed"),  filter_params.get("title_contains")
-        created_after, created_before = filter_params.get("created_after"), filter_params.get("created_before")
-        user_id, version = filter_params.get("user_id"), filter_params.get("version")
-        filter_conditions = []
+        completed = filter_params.pop("completed", None)
+        title_contains = filter_params.pop("title_contains", None)
+        created_after = filter_params.pop("created_after", None)
+        created_before = filter_params.pop("created_before", None)
 
+        filter_conditions = []
         if completed is not None:
             filter_conditions.append(self.model.completed == completed)
         if title_contains is not None:
@@ -33,12 +34,10 @@ class ToDoRepository(BaseRepository):
             filter_conditions.append(self.model.created_at >= created_after)
         if created_before is not None:
             filter_conditions.append(self.model.created_at <= created_before)
-        if user_id is not None:
-            filter_conditions.append(self.model.user_id == user_id)
-        if version is not None:
-            filter_conditions.append(self.model.version == version)
 
-        return query.where(and_(*filter_conditions))
+        query = query.where(and_(*filter_conditions))
+
+        return super()._add_filter_params(query, filter_params)
 
     async def get_many(
         self,
