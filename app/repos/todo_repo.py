@@ -2,14 +2,33 @@ from typing import Sequence, Any
 import datetime as dt
 
 import pytz
-from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case
+from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case, cast, String, text, ClauseElement
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.compiler import compiles
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoSortingFields
 from app.errors.exceptions import TimezoneException
 from app.repos.base_repo import BaseRepository
+
+
+class explain(Executable, ClauseElement):
+    inherit_cache = False
+
+    def __init__(self, stmt, analyze=False):
+        self.statement = stmt
+        self.analyze = analyze
+
+
+@compiles(explain, "postgresql")
+def pg_explain(element, compiler, **kw):
+    text = "EXPLAIN "
+    if element.analyze:
+        text += "ANALYZE "
+    text += compiler.process(element.statement, **kw)
+
+    return text
 
 
 class ToDoRepository(BaseRepository):
@@ -54,7 +73,7 @@ class ToDoRepository(BaseRepository):
         sorted_query = self._add_ordering_params(limited_query, sort_by)
 
         result = await session.execute(sorted_query)
-        return result.scalars().all()
+        return result.scalars().all(
 
     async def search(
         self,
@@ -62,28 +81,12 @@ class ToDoRepository(BaseRepository):
         search_q: str,
         filter_params: dict[str, Any],
         ordering_params: dict[str, Any],
-        language: str = "russian"
+        language: str = "russian",
     ):
-        search_query = func.plain_to_tsquery(language, search_q)
-        limit, offset = ordering_params.get("limit", 10), ordering_params.get("offset", 0)
-        sort_by = ordering_params.get("sort_by", "-rank")
-
-        query = (
-            select(
-                self.model,
-                func.ts_rank(self.model.search_vector, search_query).label("rank"),
-            )
-            .where(self.model.search_vector.op("@@")(search_query))
-        )
-
-        filtered_query = self._add_filter_params(query, filter_params)
-        limited_query = self._add_limit_and_offset(filtered_query, limit, offset)
-        sorted_query = self._add_ordering_params(limited_query, sort_by)
-
-        result = await session.execute(sorted_query)
-        rows = result.all()
-        return [row[0] for row in rows]
-
+        await session.execute(text('SET enable_seqscan = OFF'))
+        stmt = select(ToDo).where(ToDo.id > 10)
+        res = await session.execute(explain(stmt))
+        return res.scalars()
 
     async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
         if timezone_str not in pytz.all_timezones:

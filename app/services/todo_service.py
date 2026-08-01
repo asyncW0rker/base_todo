@@ -55,15 +55,18 @@ class ToDoService:
         filter_params: ToDoFilterParams,
         current_user_info: dict[str, Any],
     ):
+        query = "string"
         filter_params_dict = filter_params.model_dump()
         if current_user_info.get("role") == UserRole.USER:
             filter_params_dict["user_id"] = int(current_user_info.get("sub"))
 
-        return await self.repo.get_many(
-            session=session,
-            ordering_params=ordering_params.model_dump(),
-            filter_params=filter_params_dict,
-        )
+        # return await self.repo.get_many(
+        #     session=session,
+        #     ordering_params=ordering_params.model_dump(),
+        #     filter_params=filter_params_dict,
+        # )
+
+        return await self.repo.search(session, query, filter_params_dict, ordering_params.model_dump())
 
     async def get_analytics(
             self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
