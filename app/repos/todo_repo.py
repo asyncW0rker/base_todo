@@ -73,7 +73,69 @@ class ToDoRepository(BaseRepository):
         sorted_query = self._add_ordering_params(limited_query, sort_by)
 
         result = await session.execute(sorted_query)
-        return result.scalars().all(
+        return result.scalars().all()
+
+    async def search_f(
+            self,
+            session: AsyncSession,
+            search_q: str,
+            filter_params: dict[str, Any],
+            ordering_params: dict[str, Any],
+            language: str = "russian"
+    ):
+            search_query = func.plain_to_tsquery(
+                func.text(f"'{language}'::regconfig"),
+                search_q
+            )
+            limit, offset = ordering_params.get("limit", 10), ordering_params.get("offset", 0)
+            sort_by = ordering_params.get("sort_by", "rank DESC")
+
+            # query = (
+            #     select(
+            #         self.model,
+            #         func.ts_rank(self.model.search_vector, search_query).label("rank"),
+            #     )
+            #     .where(self.model.search_vector.op("@@")(search_query))
+            # )
+            #
+            # filtered_query = self._add_filter_params(query, filter_params)
+            # limited_query = self._add_limit_and_offset(filtered_query, limit, offset)
+            # sorted_query = self._add_ordering_params(limited_query, sort_by)
+
+            sort_map = {
+                "rank": "rank DESC",
+                "-rank": "rank DESC",
+                "created_at": "todos.created_at DESC",
+                "-created_at": "todos.created_at ASC",
+            }
+            order_clause = sort_map.get(sort_by, "rank DESC")
+
+            sql = text(f"""
+                    SELECT 
+                        todos.*,
+                        ts_rank(
+                            todos.search_vector, 
+                            plainto_tsquery(:lang::regconfig, :query)
+                        ) as rank
+                    FROM todos
+                    WHERE todos.search_vector @@ plainto_tsquery(:lang::regconfig, :query)
+                    ORDER BY {order_clause}
+                    LIMIT :limit OFFSET :offset
+                """)
+
+            params = {
+                "lang": language,
+                "query": search_q,
+                "limit": limit,
+                "offset": offset
+            }
+
+            result = await session.execute(sql, params)
+            rows = result.all()
+
+            # result = await session.execute(sorted_query)
+            # rows = result.all()
+            return [row[0] for row in rows]
 
     async def search(
         self,
@@ -83,10 +145,28 @@ class ToDoRepository(BaseRepository):
         ordering_params: dict[str, Any],
         language: str = "russian",
     ):
+
         await session.execute(text('SET enable_seqscan = OFF'))
-        stmt = select(ToDo).where(ToDo.id > 10)
-        res = await session.execute(explain(stmt))
-        return res.scalars()
+        # await session.execute(select(func.))
+        query = "заголовокСтрока"
+        columns = func.coalesce(ToDo.title, "").concat(func.coalesce(ToDo.description, ""))
+        columns = columns.self_group()
+        stmt = (
+            select(
+                ToDo.title,
+                ToDo.description,
+                func.similarity(columns, query),
+            )
+            .where(
+                columns.bool_op("%")(query),
+            )
+            .order_by(
+                func.similarity(columns, query).desc(),
+            )
+        )
+        res = await session.execute(stmt)
+        print(res.all())
+        return res.fetchall()
 
     async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
         if timezone_str not in pytz.all_timezones:
