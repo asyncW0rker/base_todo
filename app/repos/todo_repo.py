@@ -2,7 +2,7 @@ from typing import Sequence, Any
 import datetime as dt
 
 import pytz
-from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case, cast, String, text, ClauseElement
+from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case, cast, String, text, ClauseElement, desc
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.compiler import compiles
@@ -146,36 +146,23 @@ class ToDoRepository(BaseRepository):
         language: str = "russian",
     ):
 
-        await session.execute(text('SET enable_seqscan = OFF'))
-        # await session.execute(select(func.))
-        query = "Строка"
-        # columns = func.coalesce(ToDo.title, "").concat(func.coalesce(ToDo.description, ""))
-        # columns = columns.self_group()
-        # stmt = (
-        #     select(
-        #         ToDo.title,
-        #         ToDo.description,
-        #         func.similarity(columns, query),
-        #     )
-        #     .where(
-        #         columns.bool_op("%")(query),
-        #     )
-        #     .order_by(
-        #         func.similarity(columns, query).desc(),
-        #     )
-        # )
+        query = "строк"
+        ts_query = func.plainto_tsquery(language, query)
+        query_similarity = ToDo.search_vector.bool_op("@@")(ts_query)
+        rank_expr = func.ts_rank_cd(ToDo.search_vector, ts_query)
         stmt = (
-            select(ToDo)
+            select(ToDo, rank_expr.label("rank"))
             .where(
-                ToDo.search_vector.bool_op("@@")(func.plainto_tsquery("russian", query))
+                query_similarity,
             )
             .order_by(
-                ToDo.search_vector.bool_op("@@")(func.plainto_tsquery("russian", query))
+                rank_expr.desc()
             )
         )
-        res = await session.execute(explain(stmt))
-        print(res.all())
-        return res.scalars().all()
+        res = await session.execute(stmt)
+        # print(res.all())
+        return [{"todo": row[0], "rank": row[1]} for row in res]
+        # return res.scalars().all()
 
     async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
         if timezone_str not in pytz.all_timezones:
