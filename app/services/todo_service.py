@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
-    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate, UserRole, ToDoPatch
+    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams
 from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPInvalidTimezoneException, HTTPToDoVersionMismatchException
 from app.repos.todo_repo import ToDoRepository
@@ -53,6 +53,7 @@ class ToDoService:
         session: AsyncSession,
         ordering_params: ToDoOrderingParams,
         filter_params: ToDoFilterParams,
+        search_params: ToDoSearchParams,
         current_user_info: dict[str, Any],
     ):
         query = "string"

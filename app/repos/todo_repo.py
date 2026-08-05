@@ -58,6 +58,34 @@ class ToDoRepository(BaseRepository):
 
         return super()._add_filter_params(query, filter_params)
 
+    def _add_search_params(
+        self,
+        query: GenerativeSelect,
+        search_query: str | None = None,
+        language: str = "russian",
+    ) -> GenerativeSelect | Executable:
+        if search_query is None:
+            return query
+
+        completed = filter_params.pop("completed", None)
+        title_contains = filter_params.pop("title_contains", None)
+        created_after = filter_params.pop("created_after", None)
+        created_before = filter_params.pop("created_before", None)
+
+        filter_conditions = []
+        if completed is not None:
+            filter_conditions.append(self.model.completed == completed)
+        if title_contains is not None:
+            filter_conditions.append(self.model.title.icontains(title_contains))
+        if created_after is not None:
+            filter_conditions.append(self.model.created_at >= created_after)
+        if created_before is not None:
+            filter_conditions.append(self.model.created_at <= created_before)
+
+        query = query.where(and_(*filter_conditions))
+
+        return super()._add_filter_params(query, filter_params)
+
     async def get_many(
         self,
         session: AsyncSession,
@@ -145,7 +173,7 @@ class ToDoRepository(BaseRepository):
         ordering_params: dict[str, Any],
         language: str = "russian",
     ):
-        query = "головок"
+        query = "строка"
         ts_query = func.plainto_tsquery(language, f"{query}:*")
         fts_match = ToDo.search_vector.bool_op("@@")(ts_query)
         trgm_match = func.lower(ToDo.title).ilike(f"%{query}%")
@@ -154,7 +182,7 @@ class ToDoRepository(BaseRepository):
 
         rank_expr = func.ts_rank_cd(ToDo.search_vector, ts_query)
         stmt = (
-            select(ToDo, rank_expr.label("rank"))
+            select(ToDo)
             .where(
                 combined_match,
             )
@@ -163,7 +191,7 @@ class ToDoRepository(BaseRepository):
             )
         )
         res = await session.execute(stmt)
-        return [{"todo": row[0], "rank": row[1]} for row in res]
+        return res.scalars().all()
         # return res.scalars().all()
 
     async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:

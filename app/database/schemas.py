@@ -21,6 +21,11 @@ class BaseFilterParams(BaseModel):
     pass
 
 
+class BaseSearchParams(BaseModel):
+    q: str | None = None
+    language: str = "russian"
+
+
 class ToDoBase(BaseModel):
     title: str
     description: str
@@ -82,6 +87,10 @@ class ToDoFilterParams(BaseFilterParams):
     title_contains: str | None = None
     created_after: dt.date | None = None
     created_before: dt.date | None = None
+
+
+class ToDoSearchParams(BaseSearchParams):
+    pass
 
 
 class ToDoAnalyticsFilterParams(BaseFilterParams):
