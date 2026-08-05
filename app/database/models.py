@@ -1,11 +1,12 @@
 import datetime as dt
+from typing import Any
 
 from sqlalchemy import ForeignKey, Enum, Computed, Index, func, text
-from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR
+from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
-from app.database.schemas import UserRole
+from app.database.schemas import UserRole, AnalyticsJobStatus
 
 
 class User(Base):
@@ -63,3 +64,14 @@ class Token(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"))
     created_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now)
     expires_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
+class AnalyticsJob(Base):
+    __tablename__ = "analytics_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(Enum(AnalyticsJobStatus), default=AnalyticsJobStatus.PENDING)
+    params: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    result: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    started_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now)
+    finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
