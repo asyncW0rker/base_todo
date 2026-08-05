@@ -35,9 +35,7 @@ class ToDoRepository(BaseRepository):
     model = ToDo
 
     def _add_filter_params(
-        self,
-        query: GenerativeSelect,
-        filter_params: dict[str, Any],
+        self, query: GenerativeSelect, filter_params: dict[str, Any],
     ) -> GenerativeSelect | Executable:
         completed = filter_params.pop("completed", None)
         title_contains = filter_params.pop("title_contains", None)
@@ -59,130 +57,22 @@ class ToDoRepository(BaseRepository):
         return super()._add_filter_params(query, filter_params)
 
     def _add_search_params(
-        self,
-        query: GenerativeSelect,
-        search_query: str | None = None,
-        language: str = "russian",
+        self, query: GenerativeSelect, search_params: dict[str, Any],
     ) -> GenerativeSelect | Executable:
+        search_query = search_params.get("q")
+        language = search_params.get("language", "russian")
         if search_query is None:
             return query
 
-        completed = filter_params.pop("completed", None)
-        title_contains = filter_params.pop("title_contains", None)
-        created_after = filter_params.pop("created_after", None)
-        created_before = filter_params.pop("created_before", None)
-
-        filter_conditions = []
-        if completed is not None:
-            filter_conditions.append(self.model.completed == completed)
-        if title_contains is not None:
-            filter_conditions.append(self.model.title.icontains(title_contains))
-        if created_after is not None:
-            filter_conditions.append(self.model.created_at >= created_after)
-        if created_before is not None:
-            filter_conditions.append(self.model.created_at <= created_before)
-
-        query = query.where(and_(*filter_conditions))
-
-        return super()._add_filter_params(query, filter_params)
-
-    async def get_many(
-        self,
-        session: AsyncSession,
-        filter_params: dict[str, Any],
-        ordering_params: dict[str, Any],
-    ) -> Sequence[ToDo]:
-        limit, offset = ordering_params.get("limit", 10), ordering_params.get("offset", 0)
-        sort_by = ordering_params.get("sort_by", ToDoSortingFields.CREATED_AT)
-
-        query = select(self.model)
-        filtered_query = self._add_filter_params(query, filter_params)
-        limited_query = self._add_limit_and_offset(filtered_query, limit, offset)
-        sorted_query = self._add_ordering_params(limited_query, sort_by)
-
-        result = await session.execute(sorted_query)
-        return result.scalars().all()
-
-    async def search_f(
-            self,
-            session: AsyncSession,
-            search_q: str,
-            filter_params: dict[str, Any],
-            ordering_params: dict[str, Any],
-            language: str = "russian"
-    ):
-            search_query = func.plain_to_tsquery(
-                func.text(f"'{language}'::regconfig"),
-                search_q
-            )
-            limit, offset = ordering_params.get("limit", 10), ordering_params.get("offset", 0)
-            sort_by = ordering_params.get("sort_by", "rank DESC")
-
-            # query = (
-            #     select(
-            #         self.model,
-            #         func.ts_rank(self.model.search_vector, search_query).label("rank"),
-            #     )
-            #     .where(self.model.search_vector.op("@@")(search_query))
-            # )
-            #
-            # filtered_query = self._add_filter_params(query, filter_params)
-            # limited_query = self._add_limit_and_offset(filtered_query, limit, offset)
-            # sorted_query = self._add_ordering_params(limited_query, sort_by)
-
-            sort_map = {
-                "rank": "rank DESC",
-                "-rank": "rank DESC",
-                "created_at": "todos.created_at DESC",
-                "-created_at": "todos.created_at ASC",
-            }
-            order_clause = sort_map.get(sort_by, "rank DESC")
-
-            sql = text(f"""
-                    SELECT 
-                        todos.*,
-                        ts_rank(
-                            todos.search_vector, 
-                            plainto_tsquery(:lang::regconfig, :query)
-                        ) as rank
-                    FROM todos
-                    WHERE todos.search_vector @@ plainto_tsquery(:lang::regconfig, :query)
-                    ORDER BY {order_clause}
-                    LIMIT :limit OFFSET :offset
-                """)
-
-            params = {
-                "lang": language,
-                "query": search_q,
-                "limit": limit,
-                "offset": offset
-            }
-
-            result = await session.execute(sql, params)
-            rows = result.all()
-
-            # result = await session.execute(sorted_query)
-            # rows = result.all()
-            return [row[0] for row in rows]
-
-    async def search(
-        self,
-        session: AsyncSession,
-        search_q: str,
-        filter_params: dict[str, Any],
-        ordering_params: dict[str, Any],
-        language: str = "russian",
-    ):
-        query = "строка"
-        ts_query = func.plainto_tsquery(language, f"{query}:*")
-        fts_match = ToDo.search_vector.bool_op("@@")(ts_query)
-        trgm_match = func.lower(ToDo.title).ilike(f"%{query}%")
+        ts_query = func.plainto_tsquery(language, f"{search_query}:*")
+        fts_match = self.model.search_vector.bool_op("@@")(ts_query)
+        trgm_match = func.lower(self.model.title).ilike(f"%{search_query}%")
 
         combined_match = fts_match | trgm_match
 
-        rank_expr = func.ts_rank_cd(ToDo.search_vector, ts_query)
-        stmt = (
-            select(ToDo)
+        rank_expr = func.ts_rank_cd(self.model.search_vector, ts_query)
+        query = (
+            query
             .where(
                 combined_match,
             )
@@ -190,9 +80,27 @@ class ToDoRepository(BaseRepository):
                 rank_expr.desc()
             )
         )
-        res = await session.execute(stmt)
-        return res.scalars().all()
-        # return res.scalars().all()
+
+        return query
+
+    async def get_many(
+        self,
+        session: AsyncSession,
+        filter_params: dict[str, Any],
+        ordering_params: dict[str, Any],
+        search_params: dict[str, Any],
+    ) -> Sequence[ToDo]:
+        limit, offset = ordering_params.get("limit", 10), ordering_params.get("offset", 0)
+        sort_by = ordering_params.get("sort_by", ToDoSortingFields.CREATED_AT)
+
+        query = select(self.model)
+        search_query = self._add_search_params(query, search_params)
+        filtered_query = self._add_filter_params(search_query, filter_params)
+        limited_query = self._add_limit_and_offset(filtered_query, limit, offset)
+        sorted_query = self._add_ordering_params(limited_query, sort_by)
+
+        result = await session.execute(sorted_query)
+        return result.scalars().all()
 
     async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
         if timezone_str not in pytz.all_timezones:
