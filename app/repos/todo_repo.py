@@ -148,25 +148,34 @@ class ToDoRepository(BaseRepository):
 
         await session.execute(text('SET enable_seqscan = OFF'))
         # await session.execute(select(func.))
-        query = "заголовокСтрока"
-        columns = func.coalesce(ToDo.title, "").concat(func.coalesce(ToDo.description, ""))
-        columns = columns.self_group()
+        query = "Строка"
+        # columns = func.coalesce(ToDo.title, "").concat(func.coalesce(ToDo.description, ""))
+        # columns = columns.self_group()
+        # stmt = (
+        #     select(
+        #         ToDo.title,
+        #         ToDo.description,
+        #         func.similarity(columns, query),
+        #     )
+        #     .where(
+        #         columns.bool_op("%")(query),
+        #     )
+        #     .order_by(
+        #         func.similarity(columns, query).desc(),
+        #     )
+        # )
         stmt = (
-            select(
-                ToDo.title,
-                ToDo.description,
-                func.similarity(columns, query),
-            )
+            select(ToDo)
             .where(
-                columns.bool_op("%")(query),
+                ToDo.search_vector.bool_op("@@")(func.plainto_tsquery("russian", query))
             )
             .order_by(
-                func.similarity(columns, query).desc(),
+                ToDo.search_vector.bool_op("@@")(func.plainto_tsquery("russian", query))
             )
         )
-        res = await session.execute(stmt)
+        res = await session.execute(explain(stmt))
         print(res.all())
-        return res.fetchall()
+        return res.scalars().all()
 
     async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
         if timezone_str not in pytz.all_timezones:
