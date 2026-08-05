@@ -145,22 +145,24 @@ class ToDoRepository(BaseRepository):
         ordering_params: dict[str, Any],
         language: str = "russian",
     ):
+        query = "головок"
+        ts_query = func.plainto_tsquery(language, f"{query}:*")
+        fts_match = ToDo.search_vector.bool_op("@@")(ts_query)
+        trgm_match = func.lower(ToDo.title).ilike(f"%{query}%")
 
-        query = "строк"
-        ts_query = func.plainto_tsquery(language, query)
-        query_similarity = ToDo.search_vector.bool_op("@@")(ts_query)
+        combined_match = fts_match | trgm_match
+
         rank_expr = func.ts_rank_cd(ToDo.search_vector, ts_query)
         stmt = (
             select(ToDo, rank_expr.label("rank"))
             .where(
-                query_similarity,
+                combined_match,
             )
             .order_by(
                 rank_expr.desc()
             )
         )
         res = await session.execute(stmt)
-        # print(res.all())
         return [{"todo": row[0], "rank": row[1]} for row in res]
         # return res.scalars().all()
 
