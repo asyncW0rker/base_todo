@@ -8,8 +8,10 @@ from app.utils.enum_fabric import generate_ordering_enum, generate_enum_from_fie
 
 
 possible_roles = ["user", "manager", "admin"]
+possible_query_languages = ["russian", "english"]
 UserRole = generate_enum_from_fields("UserRole", possible_roles)
-AvailableTimezones = generate_enum_from_fields("AvailableTimezones", pytz.all_timezones)
+AnalyticsTimezone = generate_enum_from_fields("AnalyticsTimezone", pytz.all_timezones)
+QueryLanguage = generate_enum_from_fields("QueryLanguage", possible_query_languages)
 
 
 class BaseOrderingParams(BaseModel):
@@ -23,7 +25,7 @@ class BaseFilterParams(BaseModel):
 
 class BaseSearchParams(BaseModel):
     q: str | None = None
-    language: str = "russian"
+    language: QueryLanguage = QueryLanguage.RUSSIAN
 
 
 class ToDoBase(BaseModel):
@@ -94,7 +96,7 @@ class ToDoSearchParams(BaseSearchParams):
 
 
 class ToDoAnalyticsFilterParams(BaseFilterParams):
-    timezone: AvailableTimezones = AvailableTimezones.EUROPE_MOSCOW
+    timezone: AnalyticsTimezone = AnalyticsTimezone.EUROPE_MOSCOW
 
 
 class CompletedStats(BaseModel):
