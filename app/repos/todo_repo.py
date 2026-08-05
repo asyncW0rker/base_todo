@@ -1,9 +1,7 @@
 from typing import Sequence, Any
-import datetime as dt
 
 import pytz
 from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
@@ -54,14 +52,9 @@ class ToDoRepository(BaseRepository):
         rank_expr = func.ts_rank_cd(self.model.search_vector, ts_query)
         query = (
             query
-            .where(
-                combined_match,
-            )
-            .order_by(
-                rank_expr.desc()
-            )
+            .where(combined_match)
+            .order_by(rank_expr.desc())
         )
-
         return query
 
     async def get_many(
@@ -83,20 +76,9 @@ class ToDoRepository(BaseRepository):
         result = await session.execute(sorted_query)
         return result.scalars().all()
 
-    async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
+    async def get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> Any:
         if timezone_str not in pytz.all_timezones:
             raise TimezoneException(f"Invalid timezone: {timezone_str}")
-
-        weekday_map = {
-            0: "Sunday",
-            1: "Monday",
-            2: "Tuesday",
-            3: "Wednesday",
-            4: "Thursday",
-            5: "Friday",
-            6: "Saturday"
-        }
-        weekday_distribution = {day: 0 for day in weekday_map.values()}
 
         weekday_expr = func.extract("dow", func.timezone(timezone_str, self.model.created_at)).label("weekday")
         weekday_query = select(
@@ -105,18 +87,9 @@ class ToDoRepository(BaseRepository):
         ).group_by(weekday_expr)
 
         weekday_result = await session.execute(weekday_query)
-        weekday_rows = weekday_result.all()
-        for row in weekday_rows:
-            day = weekday_map[row.weekday]
-            weekday_distribution[day] = row.count
+        return weekday_result.all()
 
-        return weekday_distribution
-
-    async def get_analytics(
-        self,
-        session: AsyncSession,
-        timezone_str: str = "Europe/Moscow",
-    ) -> dict[str, Any]:
+    async def get_analytics(self, session: AsyncSession,) -> Any:
         query = select(
             func.count(self.model.id).label("total_count"),
             func.sum(
@@ -129,26 +102,5 @@ class ToDoRepository(BaseRepository):
                 ), else_=None)
             ).label("average_completed"),
         )
-
         result = await session.execute(query)
-        rows = result.all()
-
-        total_count = rows[0].total_count if rows and rows[0].total_count else 0
-        completed_count = rows[0].completed_count if rows and rows[0].completed_count else 0
-        average_completed = rows[0].average_completed if rows and rows[0].average_completed else dt.timedelta(seconds=0)
-        avg_completion_time_hours = round(average_completed.total_seconds() / 3600, 2)
-
-        try:
-            weekday_distribution = await self._get_weekday_analytics(session, timezone_str)
-        except DBAPIError:
-            raise TimezoneException
-
-        return {
-            "total_count": total_count,
-            "completed_stats": {
-                "true": completed_count,
-                "false": total_count - completed_count,
-            },
-            "avg_completion_time_hours": avg_completion_time_hours,
-            "weekday_distribution": weekday_distribution,
-        }
+        return result.all()

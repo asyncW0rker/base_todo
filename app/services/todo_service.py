@@ -56,7 +56,6 @@ class ToDoService:
         search_params: ToDoSearchParams,
         current_user_info: dict[str, Any],
     ):
-        query = "string"
         filter_params_dict = filter_params.model_dump()
         if current_user_info.get("role") == UserRole.USER:
             filter_params_dict["user_id"] = int(current_user_info.get("sub"))
@@ -67,16 +66,6 @@ class ToDoService:
             filter_params=filter_params_dict,
             search_params=search_params.model_dump(),
         )
-
-
-    async def get_analytics(
-            self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
-    ) -> ToDoAnalyticsOutput:
-        try:
-            analytics = await self.repo.get_analytics(session, filter_params.timezone)
-            return ToDoAnalyticsOutput.model_validate(analytics)
-        except TimezoneException:
-            raise HTTPInvalidTimezoneException
 
     async def update_todo(
         self,
