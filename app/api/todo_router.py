@@ -5,8 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams, \
-    ToDoAnalyticsFilterParams, ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams
-from app.services.analytics_service import AnalyticsService, get_analytics_service
+    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams
 from app.services.todo_service import ToDoService, get_todo_service
 from app.utils.dependencies import admin_role_required, auth_required, user_ownership_required, manager_role_required
 from app.utils.utils import get_current_user_payload
@@ -36,18 +35,6 @@ async def get_todos(
         # current_user_info=current_user_info,
         current_user_info={},
     )
-
-
-@router.get(
-    "/analytics",
-    # dependencies=[manager_role_required],
-)
-async def get_todos_analytics(
-    filter_params: Annotated[ToDoAnalyticsFilterParams, Depends()],
-    session: AsyncSession = Depends(get_session),
-    analytics_service: AnalyticsService = Depends(get_analytics_service),
-):
-    return await analytics_service.get_analytics(session=session, filter_params=filter_params)
 
 
 @router.get(
