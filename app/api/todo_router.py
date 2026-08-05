@@ -16,7 +16,7 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 
 @router.get(
     "/",
-    # response_model=list[ToDoOutput],
+    response_model=list[ToDoOutput],
     # dependencies=[auth_required]
 )
 async def get_todos(

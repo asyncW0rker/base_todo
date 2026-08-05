@@ -2,33 +2,14 @@ from typing import Sequence, Any
 import datetime as dt
 
 import pytz
-from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case, cast, String, text, ClauseElement, desc
+from sqlalchemy import select, GenerativeSelect, func, Executable, and_, case
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.compiler import compiles
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoSortingFields
 from app.errors.exceptions import TimezoneException
 from app.repos.base_repo import BaseRepository
-
-
-class explain(Executable, ClauseElement):
-    inherit_cache = False
-
-    def __init__(self, stmt, analyze=False):
-        self.statement = stmt
-        self.analyze = analyze
-
-
-@compiles(explain, "postgresql")
-def pg_explain(element, compiler, **kw):
-    text = "EXPLAIN "
-    if element.analyze:
-        text += "ANALYZE "
-    text += compiler.process(element.statement, **kw)
-
-    return text
 
 
 class ToDoRepository(BaseRepository):
