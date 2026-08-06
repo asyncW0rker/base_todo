@@ -1,6 +1,7 @@
 import datetime as dt
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
 
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,13 +17,13 @@ class AnalyticsService:
     todo_repo: ToDoRepository = ToDoRepository()
     analytics_repo: AnalyticsJobRepository = AnalyticsJobRepository()
 
-    async def _get_weekday_analytics(self, session: AsyncSession, timezone_str: str) -> dict[str, int]:
+    async def _get_weekday_analytics(self, session: AsyncSession, filter_params: dict[str, Any]) -> dict[str, int]:
         days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
         weekday_map = dict(zip(range(7), days))
         weekday_distribution = {day: 0 for day in days}
 
         try:
-            weekday_rows = await self.todo_repo.get_weekday_analytics(session, timezone_str)
+            weekday_rows = await self.todo_repo.get_weekday_analytics(session, filter_params)
         except (TimezoneException, DBAPIError):
             raise HTTPInvalidTimezoneException
 
@@ -35,13 +36,14 @@ class AnalyticsService:
     async def get_analytics(
             self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
     ) -> ToDoAnalyticsOutput:
-        rows = await self.todo_repo.get_analytics(session)
+        filter_params = filter_params.model_dump()
+        rows = await self.todo_repo.get_analytics(session, filter_params)
         total_count = rows[0].total_count if rows and rows[0].total_count else 0
         completed_count = rows[0].completed_count if rows and rows[0].completed_count else 0
         avg_completed = rows[0].average_completed if rows and rows[0].average_completed else dt.timedelta(seconds=0)
         avg_completion_time_hours = round(avg_completed.total_seconds() / 3600, 2)
 
-        weekday_distribution = await self._get_weekday_analytics(session, filter_params.timezone)
+        weekday_distribution = await self._get_weekday_analytics(session, filter_params)
 
         return ToDoAnalyticsOutput.model_validate({
             "total_count": total_count,

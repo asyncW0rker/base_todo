@@ -99,6 +99,7 @@ class ToDoSearchParams(BaseSearchParams):
 
 
 class ToDoAnalyticsFilterParams(BaseFilterParams):
+    user_id: int | None = None
     timezone: AnalyticsTimezone = AnalyticsTimezone.EUROPE_MOSCOW
 
 

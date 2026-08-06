@@ -12,10 +12,10 @@ router = APIRouter(prefix="/todos/analytics", tags=["analytics"])
 
 
 @router.get(
-    "/",
+    "/compute",
     # dependencies=[manager_role_required],
 )
-async def get_todos_analytics(
+async def compute_todos_analytics(
     filter_params: Annotated[ToDoAnalyticsFilterParams, Depends()],
     session: AsyncSession = Depends(get_session),
     analytics_service: AnalyticsService = Depends(get_analytics_service),
