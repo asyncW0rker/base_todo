@@ -17,13 +17,15 @@ class AnalyticsService:
     todo_repo: ToDoRepository = ToDoRepository()
     analytics_repo: AnalyticsJobRepository = AnalyticsJobRepository()
 
-    async def _get_weekday_analytics(self, session: AsyncSession, filter_params: dict[str, Any]) -> dict[str, int]:
+    async def _get_weekday_analytics(
+        self, session: AsyncSession, filter_params: dict[str, Any], timezone_str: str
+    ) -> dict[str, int]:
         days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
         weekday_map = dict(zip(range(7), days))
         weekday_distribution = {day: 0 for day in days}
 
         try:
-            weekday_rows = await self.todo_repo.get_weekday_analytics(session, filter_params)
+            weekday_rows = await self.todo_repo.get_weekday_analytics(session, filter_params, timezone_str)
         except (TimezoneException, DBAPIError):
             raise HTTPInvalidTimezoneException
 
@@ -33,17 +35,26 @@ class AnalyticsService:
 
         return weekday_distribution
 
+    async def _get_top_words_analytics(self, session: AsyncSession, filter_params: dict[str, Any]) -> dict[str, int]:
+        top_words_result = await self.todo_repo.get_top_words_analytics(session, filter_params)
+        top_words_analytics = {pair["word"]: pair["count"] for pair in top_words_result}
+        return top_words_analytics
+
     async def get_analytics(
             self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
     ) -> ToDoAnalyticsOutput:
         filter_params = filter_params.model_dump()
+        timezone = filter_params.pop("timezone", "Europe/Moscow")
+
         rows = await self.todo_repo.get_analytics(session, filter_params)
+
         total_count = rows[0].total_count if rows and rows[0].total_count else 0
         completed_count = rows[0].completed_count if rows and rows[0].completed_count else 0
         avg_completed = rows[0].average_completed if rows and rows[0].average_completed else dt.timedelta(seconds=0)
         avg_completion_time_hours = round(avg_completed.total_seconds() / 3600, 2)
 
-        weekday_distribution = await self._get_weekday_analytics(session, filter_params)
+        weekday_distribution = await self._get_weekday_analytics(session, filter_params, timezone)
+        top_words_analytics = await self._get_top_words_analytics(session, filter_params)
 
         return ToDoAnalyticsOutput.model_validate({
             "total_count": total_count,
@@ -53,6 +64,7 @@ class AnalyticsService:
             },
             "avg_completion_time_hours": avg_completion_time_hours,
             "weekday_distribution": weekday_distribution,
+            "top_words_in_titles": top_words_analytics,
         })
 
 

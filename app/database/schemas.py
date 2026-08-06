@@ -118,11 +118,17 @@ class WeekdayDistribution(BaseModel):
     Sunday: int = 0
 
 
+class TopWordsAnalyticsItem(BaseModel):
+    word: str
+    count: int
+
+
 class ToDoAnalyticsOutput(BaseModel):
     total_count: int
     completed_stats: CompletedStats
     avg_completion_time_hours: float
     weekday_distribution: WeekdayDistribution
+    top_words_in_titles: dict[str, int]
 
     class Config:
         from_attributes = True

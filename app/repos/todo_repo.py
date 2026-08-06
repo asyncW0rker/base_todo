@@ -76,10 +76,12 @@ class ToDoRepository(BaseRepository):
         result = await session.execute(sorted_query)
         return result.scalars().all()
 
-    async def get_weekday_analytics(self, session: AsyncSession, filter_params: dict[str, Any]) -> Any:
-        timezone_str = filter_params.get("timezone", "Europe/Moscow")
-        user_id = filter_params.get("user_id", None)
-
+    async def get_weekday_analytics(
+        self,
+        session: AsyncSession,
+        filter_params: dict[str, Any],
+        timezone_str: str = "Europe/Moscow",
+    ) -> Any:
         if timezone_str not in pytz.all_timezones:
             raise TimezoneException(f"Invalid timezone: {timezone_str}")
 
@@ -89,15 +91,13 @@ class ToDoRepository(BaseRepository):
             func.count(self.model.id).label("count")
         ))
 
-        if user_id is not None:
-            weekday_query = weekday_query.where(self.model.user_id == user_id)
-
+        weekday_query = self._add_filter_params(weekday_query, filter_params)
         weekday_query = weekday_query.group_by(weekday_expr)
 
         weekday_result = await session.execute(weekday_query)
         return weekday_result.all()
 
-    async def get_analytics(self, session: AsyncSession, filter_params) -> Any:
+    async def get_analytics(self, session: AsyncSession, filter_params: dict[str, Any]) -> Any:
         query = select(
             func.count(self.model.id).label("total_count"),
             func.sum(
@@ -113,3 +113,36 @@ class ToDoRepository(BaseRepository):
         query = self._add_filter_params(query, filter_params)
         result = await session.execute(query)
         return result.all()
+
+    async def get_top_words_analytics(
+        self,
+        session: AsyncSession,
+        filter_params: dict[str, Any],
+        language: str = "russian",
+        limit: int = 3,
+    ) -> Any:
+        lexeme_expr = func.unnest(
+            func.tsvector_to_array(
+                func.to_tsvector(language, func.coalesce(self.model.title, ""))
+            )
+        ).column_valued("word")
+
+        query = (
+            select(
+                lexeme_expr.label("word"),
+                func.count(lexeme_expr).label("count")
+            )
+            .select_from(self.model)
+        )
+
+        query = self._add_filter_params(query, filter_params)
+
+        query = (
+            query
+            .group_by("word")
+            .order_by(func.count(lexeme_expr).desc())
+            .limit(limit)
+        )
+
+        result = await session.execute(query)
+        return [dict(row) for row in result.mappings()]
