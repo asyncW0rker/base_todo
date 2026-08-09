@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import AnalyticsJob
 from app.database.schemas import ToDoAnalyticsOutput, ToDoAnalyticsFilterParams, AnalyticsJobStatus
-from app.errors.exceptions import TimezoneException, HTTPInvalidTimezoneException
+from app.errors.exceptions import TimezoneException, HTTPInvalidTimezoneException, HTTPAnalyticsJobNotFoundException
 from app.repos.analytics_job_repo import AnalyticsJobRepository
 from app.repos.todo_repo import ToDoRepository
 
@@ -42,7 +42,7 @@ class AnalyticsService:
         top_words_analytics = {pair["word"]: pair["count"] for pair in top_words_result}
         return top_words_analytics
 
-    async def change_analytics_job(
+    async def update_analytics_job(
         self, session: AsyncSession, job_id: int, update_data: dict[str, Any]
     ) -> AnalyticsJob:
         return await self.analytics_repo.update_one(session, job_id, dict(), update_data)
@@ -78,14 +78,14 @@ class AnalyticsService:
         self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams, job_id: int
     ) -> AnalyticsJob:
         try:
-            await self.change_analytics_job(session, job_id, {
+            await self.update_analytics_job(session, job_id, {
                 "status": AnalyticsJobStatus.RUNNING,
                 "started_at": dt.datetime.now(dt.UTC),
             })
 
             analytics_data = await self.compute_analytics(session, filter_params)
 
-            job = await self.change_analytics_job(session, job_id, {
+            job = await self.update_analytics_job(session, job_id, {
                 "status": AnalyticsJobStatus.DONE,
                 "result": analytics_data,
                 "finished_at": dt.datetime.now(dt.UTC),
@@ -93,7 +93,7 @@ class AnalyticsService:
             return job
         except Exception:
             await session.rollback()
-            await self.change_analytics_job(session, job_id, {
+            await self.update_analytics_job(session, job_id, {
                 "status": AnalyticsJobStatus.FAILED,
             })
             raise
@@ -107,6 +107,14 @@ class AnalyticsService:
         analytics_job = await self.analytics_repo.create_one(session, job_data)
         background_tasks.add_task(self.compute_analytics_job, session, filter_params, analytics_job.id)
         return {"job_id": analytics_job.id}
+
+    async def get_analytics_job(
+        self, session: AsyncSession, job_id: int
+    ):
+        analytics_job = await self.analytics_repo.get_one(session, job_id)
+        if analytics_job is None:
+            raise HTTPAnalyticsJobNotFoundException
+        return analytics_job
 
 
 @lru_cache
