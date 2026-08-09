@@ -3,10 +3,12 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
+from fastapi import BackgroundTasks
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.schemas import ToDoAnalyticsOutput, ToDoAnalyticsFilterParams
+from app.database.models import AnalyticsJob
+from app.database.schemas import ToDoAnalyticsOutput, ToDoAnalyticsFilterParams, AnalyticsJobStatus
 from app.errors.exceptions import TimezoneException, HTTPInvalidTimezoneException
 from app.repos.analytics_job_repo import AnalyticsJobRepository
 from app.repos.todo_repo import ToDoRepository
@@ -40,6 +42,11 @@ class AnalyticsService:
         top_words_analytics = {pair["word"]: pair["count"] for pair in top_words_result}
         return top_words_analytics
 
+    async def change_job_status(
+        self, session: AsyncSession, job_id: int,  status: AnalyticsJobStatus
+    ) -> AnalyticsJob:
+        return await self.analytics_repo.update_one(session, job_id, dict(), {"status": status})
+
     async def compute_analytics(
         self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
     ) -> ToDoAnalyticsOutput:
@@ -66,6 +73,28 @@ class AnalyticsService:
             "weekday_distribution": weekday_distribution,
             "top_words_in_titles": top_words_analytics,
         })
+
+    async def create_analytics_job(
+        self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams, job_id: int
+    ) -> AnalyticsJob:
+        await self.change_job_status(session, job_id, AnalyticsJobStatus.RUNNING)
+        analytics_data = await self.compute_analytics(session, filter_params)
+        update_data = {
+            "status": AnalyticsJobStatus.DONE,
+            "result": analytics_data,
+        }
+        job = await self.analytics_repo.update_one(session, job_id, filter_params={}, update_data=update_data)
+        return job
+
+    async def start_compute_analytics(
+        self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams, background_tasks: BackgroundTasks,
+    ):
+        job_data = {
+            "params": filter_params.model_dump()
+        }
+        analytics_job = await self.analytics_repo.create_one(session, job_data)
+        background_tasks.add_task(self.create_analytics_job, session, filter_params, analytics_job.id)
+        return {"job_id": analytics_job.id}
 
 
 @lru_cache
