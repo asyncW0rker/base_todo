@@ -42,10 +42,10 @@ class AnalyticsService:
         top_words_analytics = {pair["word"]: pair["count"] for pair in top_words_result}
         return top_words_analytics
 
-    async def change_job_status(
-        self, session: AsyncSession, job_id: int,  status: AnalyticsJobStatus
+    async def change_analytics_job(
+        self, session: AsyncSession, job_id: int, update_data: dict[str, Any]
     ) -> AnalyticsJob:
-        return await self.analytics_repo.update_one(session, job_id, dict(), {"status": status})
+        return await self.analytics_repo.update_one(session, job_id, dict(), update_data)
 
     async def compute_analytics(
         self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
@@ -74,17 +74,29 @@ class AnalyticsService:
             "top_words_in_titles": top_words_analytics,
         })
 
-    async def create_analytics_job(
+    async def compute_analytics_job(
         self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams, job_id: int
     ) -> AnalyticsJob:
-        await self.change_job_status(session, job_id, AnalyticsJobStatus.RUNNING)
-        analytics_data = await self.compute_analytics(session, filter_params)
-        update_data = {
-            "status": AnalyticsJobStatus.DONE,
-            "result": analytics_data,
-        }
-        job = await self.analytics_repo.update_one(session, job_id, filter_params={}, update_data=update_data)
-        return job
+        try:
+            await self.change_analytics_job(session, job_id, {
+                "status": AnalyticsJobStatus.RUNNING,
+                "started_at": dt.datetime.now(dt.UTC),
+            })
+
+            analytics_data = await self.compute_analytics(session, filter_params)
+
+            job = await self.change_analytics_job(session, job_id, {
+                "status": AnalyticsJobStatus.DONE,
+                "result": analytics_data,
+                "finished_at": dt.datetime.now(dt.UTC),
+            })
+            return job
+        except Exception:
+            await session.rollback()
+            await self.change_analytics_job(session, job_id, {
+                "status": AnalyticsJobStatus.FAILED,
+            })
+            raise
 
     async def start_compute_analytics(
         self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams, background_tasks: BackgroundTasks,
@@ -93,7 +105,7 @@ class AnalyticsService:
             "params": filter_params.model_dump()
         }
         analytics_job = await self.analytics_repo.create_one(session, job_data)
-        background_tasks.add_task(self.create_analytics_job, session, filter_params, analytics_job.id)
+        background_tasks.add_task(self.compute_analytics_job, session, filter_params, analytics_job.id)
         return {"job_id": analytics_job.id}
 
 
