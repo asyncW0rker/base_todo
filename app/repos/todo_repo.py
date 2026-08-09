@@ -119,7 +119,7 @@ class ToDoRepository(BaseRepository):
         session: AsyncSession,
         filter_params: dict[str, Any],
         language: str = "russian",
-        limit: int = 3,
+        limit: int = 10,
     ) -> Any:
         lexeme_expr = func.unnest(
             func.tsvector_to_array(

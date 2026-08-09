@@ -40,8 +40,8 @@ class AnalyticsService:
         top_words_analytics = {pair["word"]: pair["count"] for pair in top_words_result}
         return top_words_analytics
 
-    async def get_analytics(
-            self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
+    async def compute_analytics(
+        self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams
     ) -> ToDoAnalyticsOutput:
         filter_params = filter_params.model_dump()
         timezone = filter_params.pop("timezone", "Europe/Moscow")
