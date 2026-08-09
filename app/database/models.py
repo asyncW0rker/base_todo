@@ -73,5 +73,5 @@ class AnalyticsJob(Base):
     status: Mapped[str] = mapped_column(Enum(AnalyticsJobStatus), default=AnalyticsJobStatus.PENDING)
     params: Mapped[dict[str, Any]] = mapped_column(JSONB)
     result: Mapped[dict[str, Any]] = mapped_column(JSONB)
-    started_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now)
+    started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
