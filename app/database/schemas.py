@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import Any
 
 import pytz
 from pydantic import BaseModel, Field, computed_field, field_validator
@@ -149,6 +150,22 @@ class ToDoStatusUpdate(BaseModel):
             return list(map(int, val.split(",")))
         except (ValueError, TypeError):
             raise HTTPValueError
+
+
+class AnalyticsJobOutput(BaseModel):
+    id: int
+    status: AnalyticsJobStatus
+    started_at: dt.datetime
+    finished_at: dt.datetime
+    params: dict[str, Any]
+    result: ToDoAnalyticsOutput
+
+    class Config:
+        from_attributes = True
+
+
+class AnalyticsComputeOutput(BaseModel):
+    job_id: int
 
 
 class UserBase(BaseModel):

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
-from app.database.schemas import ToDoAnalyticsFilterParams
+from app.database.schemas import ToDoAnalyticsFilterParams, AnalyticsComputeOutput, AnalyticsJobOutput
 from app.services import analytics_service
 from app.services.analytics_service import AnalyticsService, get_analytics_service
 
@@ -14,6 +14,8 @@ router = APIRouter(prefix="/todos/analytics", tags=["analytics"])
 
 @router.post(
     "/compute",
+    status_code=201,
+    response_model=AnalyticsComputeOutput,
     # dependencies=[manager_role_required],
 )
 async def compute_todos_analytics(
@@ -27,7 +29,10 @@ async def compute_todos_analytics(
     )
 
 
-@router.get("/{job_id}")
+@router.get(
+    "/{job_id}",
+    response_model=AnalyticsJobOutput,
+)
 async def get_todos_analytics(
     job_id: int,
     session: AsyncSession = Depends(get_session),

@@ -87,7 +87,7 @@ class AnalyticsService:
 
             job = await self.update_analytics_job(session, job_id, {
                 "status": AnalyticsJobStatus.DONE,
-                "result": analytics_data,
+                "result": analytics_data.model_dump(),
                 "finished_at": dt.datetime.now(dt.UTC),
             })
             return job
