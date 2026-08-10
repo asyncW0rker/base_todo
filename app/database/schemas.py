@@ -66,6 +66,23 @@ class ToDoPatch(BaseModel):
         return {k: v for k, v in super().model_dump(**kwargs).items() if v is not None}
 
 
+class ToDoStatusUpdate(BaseModel):
+    ids: str
+    completed: bool = True
+
+    @computed_field
+    def completed_at(self) -> dt.datetime | None:
+        return dt.datetime.now(dt.UTC) if self.completed else None
+
+    @field_validator("ids")
+    @classmethod
+    def process_ids(cls, val):
+        try:
+            return list(map(int, val.split(",")))
+        except (ValueError, TypeError):
+            raise HTTPValueError
+
+
 class ToDoOutput(BaseModel):
     id: int
     title: str
@@ -133,23 +150,6 @@ class ToDoAnalyticsOutput(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class ToDoStatusUpdate(BaseModel):
-    ids: str
-    completed: bool = True
-
-    @computed_field
-    def completed_at(self) -> dt.datetime | None:
-        return dt.datetime.now(dt.UTC) if self.completed else None
-
-    @field_validator("ids")
-    @classmethod
-    def process_ids(cls, val):
-        try:
-            return list(map(int, val.split(",")))
-        except (ValueError, TypeError):
-            raise HTTPValueError
 
 
 class AnalyticsJobOutput(BaseModel):

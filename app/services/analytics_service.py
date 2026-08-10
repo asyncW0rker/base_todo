@@ -116,6 +116,12 @@ class AnalyticsService:
             raise HTTPAnalyticsJobNotFoundException
         return analytics_job
 
+    async def get_analytics_job_by_params(self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams):
+        analytics_job = await self.analytics_repo.get_last_one_with_params(session, filter_params)
+        if analytics_job is None:
+            raise HTTPAnalyticsJobNotFoundException
+        return analytics_job
+
 
 @lru_cache
 def get_analytics_service() -> AnalyticsService:
