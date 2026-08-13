@@ -18,6 +18,10 @@ QueryLanguage = generate_enum_from_fields("QueryLanguage", possible_query_langua
 AnalyticsJobStatus = generate_enum_from_fields("AnalyticsJobStatus", possible_job_statuses)
 
 
+class HTTPErrorDetail(BaseModel):
+    detail: str
+
+
 class BaseOrderingParams(BaseModel):
     limit: int = Field(10, gt=0, le=100)
     offset: int = Field(0, ge=0)
@@ -155,17 +159,19 @@ class ToDoAnalyticsOutput(BaseModel):
 class AnalyticsJobOutput(BaseModel):
     id: int
     status: AnalyticsJobStatus
-    started_at: dt.datetime
-    finished_at: dt.datetime
+    created_at: dt.datetime
+    started_at: dt.datetime | None
+    finished_at: dt.datetime | None
     params: dict[str, Any]
-    result: ToDoAnalyticsOutput
+    result: ToDoAnalyticsOutput | dict
 
     class Config:
         from_attributes = True
 
 
-class AnalyticsComputeOutput(BaseModel):
+class AnalyticsJobAccepted(BaseModel):
     job_id: int
+    status: AnalyticsJobStatus = AnalyticsJobStatus.PENDING
 
 
 class UserBase(BaseModel):
