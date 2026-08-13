@@ -1,7 +1,6 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, BackgroundTasks, status
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
@@ -67,12 +66,3 @@ async def get_todos_analytics_by_params(
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
     return await analytics_service.get_analytics_job_by_params(session, filter_params)
-
-
-@router.delete("/")
-async def delete_todos_analytics(
-    session: AsyncSession = Depends(get_session),
-):
-    await session.execute(text("DELETE FROM analytics_jobs"))
-    await session.commit()
-    return {"success": True}
