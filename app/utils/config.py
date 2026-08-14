@@ -33,10 +33,11 @@ class S3Settings(BaseSettings):
     S3_GUI_PORT: str
     S3_USER: str
     S3_PASS: str
+    S3_BUCKET: str
 
     @property
     def s3_url(self) -> str:
-        return f"{self.S3_HOST}/{self.S3_API_PORT}"
+        return f"http://{self.S3_HOST}/{self.S3_API_PORT}"
 
 
 class Settings(BaseSettings):
