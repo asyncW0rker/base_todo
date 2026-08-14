@@ -7,11 +7,13 @@ from aiobotocore.session import get_session
 
 from app.database.schemas import AttachmentUploadRequest
 from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentUnsupportedMedia
+from app.repos.attachment_repo import AttachmentRepository
 from app.utils.config import settings
 
 
 @dataclass
 class S3Service:
+    attachment_repo: AttachmentRepository = AttachmentRepository()
     _client: Any | None = None
     _session: Any = field(default_factory=get_session)
     endpoint_url: str = settings.s3.s3_url

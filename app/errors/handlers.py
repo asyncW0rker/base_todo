@@ -8,11 +8,9 @@ from app.errors.exceptions import HTTPAttachmentUnsupportedMedia
 async def pydantic_validation_exception_handler(request: Request, exc: RequestValidationError):
     for error in exc.errors():
         if "content_type" in error["loc"]:
-            media_exc = HTTPAttachmentUnsupportedMedia()
-
             return JSONResponse(
-                status_code=media_exc.status_code,
-                content={"detail": media_exc.detail}
+                status_code= HTTPAttachmentUnsupportedMedia.status_code,
+                content={"detail":  HTTPAttachmentUnsupportedMedia.detail}
             )
 
     return JSONResponse(
