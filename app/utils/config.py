@@ -34,6 +34,7 @@ class S3Settings(BaseSettings):
     S3_USER: str
     S3_PASS: str
     S3_BUCKET: str
+    S3_MAX_SIZE: int
 
     @property
     def s3_url(self) -> str:
