@@ -11,6 +11,18 @@ services:
     volumes:
       - todo_data:/var/lib/postgresql/18/docker
     restart: unless-stopped
+  minio:
+    image: minio/minio
+    ports:
+      - "${S3_API_PORT}:${S3_API_PORT}"
+      - "${S3_GUI_PORT}:${S3_GUI_PORT}"
+    environment:
+      - MINIO_ROOT_USER=${S3_USER}
+      - MINIO_ROOT_PASSWORD=${S3_PASS}
+    command: server /data --console-address ":${S3_GUI_PORT}"
+    volumes:
+      - minio_data:/data
 
 volumes:
   todo_data:
+  minio_data:
