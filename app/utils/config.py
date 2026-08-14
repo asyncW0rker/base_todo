@@ -25,9 +25,24 @@ class SecuritySettings(BaseSettings):
     JWT_REFRESH_EXPIRE_SECONDS: int
 
 
+class S3Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=find_dotenv(), extra="ignore")
+
+    S3_HOST: str
+    S3_API_PORT: str
+    S3_GUI_PORT: str
+    S3_USER: str
+    S3_PASS: str
+
+    @property
+    def s3_url(self) -> str:
+        return f"{self.S3_HOST}/{self.S3_API_PORT}"
+
+
 class Settings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     security: SecuritySettings = SecuritySettings()
+    s3: S3Settings = S3Settings()
 
 
 settings = Settings()
