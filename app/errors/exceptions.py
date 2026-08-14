@@ -49,4 +49,8 @@ HTTPToDoVersionMismatchException = HTTPConflictException
 
 
 HTTPTooLargeException = partial(HTTPException, status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
-HTTPPayloadTooLargeException = HTTPTooLargeException(detail="Payload too large")
+HTTPAttachmentTooLargeException = HTTPTooLargeException(detail="Payload too large")
+
+
+HTTPUnsupportedMedia = partial(HTTPException, status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+HTTPAttachmentUnsupportedMedia = HTTPUnsupportedMedia(detail="Unsupported file type")

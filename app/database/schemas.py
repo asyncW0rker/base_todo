@@ -11,11 +11,13 @@ from app.utils.enum_fabric import generate_ordering_enum, generate_enum_from_fie
 possible_roles = ["user", "manager", "admin"]
 possible_query_languages = ["russian", "english"]
 possible_job_statuses = ["pending", "running", "done", "failed"]
+possible_content_types = ["image/jpeg", "image/png", "application/pdf"]
 
 UserRole = generate_enum_from_fields("UserRole", possible_roles)
 AnalyticsTimezone = generate_enum_from_fields("AnalyticsTimezone", pytz.all_timezones)
 QueryLanguage = generate_enum_from_fields("QueryLanguage", possible_query_languages)
 AnalyticsJobStatus = generate_enum_from_fields("AnalyticsJobStatus", possible_job_statuses)
+AttachmentContentType = generate_enum_from_fields("AttachmentContentType", possible_content_types)
 
 
 class HTTPErrorDetail(BaseModel):
@@ -172,6 +174,12 @@ class AnalyticsJobOutput(BaseModel):
 class AnalyticsJobAccepted(BaseModel):
     job_id: int
     status: AnalyticsJobStatus = AnalyticsJobStatus.PENDING
+
+
+class AttachmentUploadRequest(BaseModel):
+    filename: str
+    size: int
+    content_type: AttachmentContentType
 
 
 class UserBase(BaseModel):

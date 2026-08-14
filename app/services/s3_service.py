@@ -5,6 +5,8 @@ from uuid import uuid4
 
 from aiobotocore.session import get_session
 
+from app.database.schemas import AttachmentUploadRequest
+from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentUnsupportedMedia
 from app.utils.config import settings
 
 
@@ -78,6 +80,16 @@ class S3Service:
             Bucket=self.bucket_name,
             Key=file_key
         )
+
+    async def request_upload(
+        self,
+        todo_id: int,
+        file_info: AttachmentUploadRequest,
+    ):
+        if file_info.size > settings.s3.S3_MAX_SIZE:
+            raise HTTPAttachmentTooLargeException
+
+        storage_key = self.generate_file_key(todo_id, file_info.filename)
 
 
 @lru_cache
