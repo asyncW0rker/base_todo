@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
-from app.database.schemas import UserRole, AnalyticsJobStatus
+from app.database.schemas import UserRole, AnalyticsJobStatus, AttachmentContentType
 
 
 class User(Base):
@@ -76,3 +76,16 @@ class AnalyticsJob(Base):
     created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
     started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
+class Attachment(Base):
+    __tablename__ = "attachments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    filename: Mapped[str]
+    size: Mapped[int]
+    content_type: Mapped[str] = mapped_column(Enum(AttachmentContentType), nullable=False)
+    storage_key: Mapped[str]
+    created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
+
+    todo_id: Mapped[int] = mapped_column(ForeignKey(ToDo.id, ondelete="CASCADE"), nullable=False)
