@@ -46,3 +46,7 @@ HTTPConflictException = partial(HTTPException, status_code=status.HTTP_409_CONFL
 HTTPUserAlreadyExistsException = HTTPConflictException(detail="User already exists")
 HTTPToDoAlreadyExistsException = HTTPConflictException(detail="ToDo already exists")
 HTTPToDoVersionMismatchException = HTTPConflictException
+
+
+HTTPTooLargeException = partial(HTTPException, status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+HTTPPayloadTooLargeException = HTTPTooLargeException(detail="Payload too large")
