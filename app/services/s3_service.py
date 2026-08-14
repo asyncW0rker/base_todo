@@ -4,6 +4,7 @@ from typing import Any
 from uuid import uuid4
 
 from aiobotocore.session import get_session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.schemas import AttachmentUploadRequest
 from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentUnsupportedMedia
@@ -87,11 +88,29 @@ class S3Service:
         self,
         todo_id: int,
         file_info: AttachmentUploadRequest,
+        session: AsyncSession,
     ):
         if file_info.size > settings.s3.S3_MAX_SIZE:
             raise HTTPAttachmentTooLargeException
 
         storage_key = self.generate_file_key(todo_id, file_info.filename)
+
+        attachment_data = file_info.model_dump()
+        attachment_data["storage_key"] = storage_key
+        attachment_data["todo_id"] = todo_id
+
+        await self.attachment_repo.create_one(session, attachment_data)
+
+        upload_url = await self.generate_presigned_upload_url(
+            file_key=storage_key,
+            content_type=file_info.content_type,
+            expires_in=300
+        )
+
+        return {
+            "storage_key": storage_key,
+            "upload_url": upload_url
+        }
 
 
 @lru_cache
