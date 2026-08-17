@@ -38,7 +38,7 @@ class S3Settings(BaseSettings):
 
     @property
     def s3_url(self) -> str:
-        return f"http://{self.S3_HOST}/{self.S3_API_PORT}"
+        return f"http://{self.S3_HOST}:{self.S3_API_PORT}"
 
 
 class Settings(BaseSettings):

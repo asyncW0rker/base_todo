@@ -7,15 +7,17 @@ from aiobotocore.session import get_session, AioSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.schemas import AttachmentUploadRequest
-from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentUnsupportedMedia, \
-    HTTPAttachmentNotFoundException
+from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentNotFoundException, \
+    HTTPToDoNotFoundException
 from app.repos.attachment_repo import AttachmentRepository
+from app.repos.todo_repo import ToDoRepository
 from app.utils.config import settings
 
 
 @dataclass
 class S3Service:
     attachment_repo: AttachmentRepository = AttachmentRepository()
+    todo_repo: ToDoRepository = ToDoRepository()
     _session: AioSession = field(default_factory=get_session)
 
     @staticmethod
@@ -91,6 +93,10 @@ class S3Service:
     ):
         if file_info.size > settings.s3.S3_MAX_SIZE:
             raise HTTPAttachmentTooLargeException
+
+        todo = await self.todo_repo.get_one(session, todo_id)
+        if todo is None:
+            raise HTTPToDoNotFoundException
 
         storage_key = self.generate_file_key(todo_id, file_info.filename)
 
