@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
 from app.database.schemas import AttachmentUploadRequest
+from app.services import s3_service
 from app.services.s3_service import S3Service, get_s3_service
 
 
@@ -26,3 +28,11 @@ async def delete_attachment(
     s3_service: S3Service = Depends(get_s3_service),
 ):
     return await s3_service.delete_attachment(session, attachment_id)
+
+
+@router.get("/attachments/")
+async def get_attachments(
+    session: AsyncSession = Depends(get_session),
+    s3_service: S3Service = Depends(get_s3_service),
+):
+    return await s3_service.get_all_attachments(session)

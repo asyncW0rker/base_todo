@@ -6,6 +6,7 @@ from uuid import uuid4
 from aiobotocore.session import get_session, AioSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.models import Attachment
 from app.database.schemas import AttachmentUploadRequest
 from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentNotFoundException, \
     HTTPToDoNotFoundException
@@ -31,7 +32,7 @@ class S3Service:
         }
 
     @staticmethod
-    def generate_file_key(todo_id: int, filename: str) -> str:
+    def _generate_file_key(todo_id: int, filename: str) -> str:
         extension = filename.split(".")[-1] if "." in filename else "bin"
         return f"todos/{todo_id}/attachments/{uuid4()}.{extension}"
 
@@ -98,7 +99,7 @@ class S3Service:
         if todo is None:
             raise HTTPToDoNotFoundException
 
-        storage_key = self.generate_file_key(todo_id, file_info.filename)
+        storage_key = self._generate_file_key(todo_id, file_info.filename)
 
         attachment_data = file_info.model_dump()
         attachment_data["storage_key"] = storage_key
@@ -116,6 +117,10 @@ class S3Service:
             "storage_key": storage_key,
             "upload_url": upload_url
         }
+
+    async def get_all_attachments(self, session: AsyncSession) -> list[Attachment]:
+        return await self.attachment_repo.get_all(session)
+
 
 
 @lru_cache
