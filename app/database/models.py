@@ -87,5 +87,6 @@ class Attachment(Base):
     content_type: Mapped[str] = mapped_column(Enum(AttachmentContentType), nullable=False)
     storage_key: Mapped[str]
     created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
+    is_uploaded: Mapped[bool] = mapped_column(default=False)
 
     todo_id: Mapped[int] = mapped_column(ForeignKey(ToDo.id, ondelete="CASCADE"), nullable=False)
