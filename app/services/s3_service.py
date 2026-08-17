@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Any
 from uuid import uuid4
 
-from aiobotocore.session import get_session
+from aiobotocore.session import get_session, AioSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.schemas import AttachmentUploadRequest
@@ -16,29 +16,17 @@ from app.utils.config import settings
 @dataclass
 class S3Service:
     attachment_repo: AttachmentRepository = AttachmentRepository()
-    _client: Any | None = None
-    _session: Any = field(default_factory=get_session)
-    endpoint_url: str = settings.s3.s3_url
-    access_key_id: str = settings.s3.S3_USER
-    secret_access_key: str = settings.s3.S3_PASSWORD
-    region_name: str = "us-east-1"
-    bucket_name: str = settings.s3.S3_BUCKET
+    _session: AioSession = field(default_factory=get_session)
 
-    async def get_client(self):
-        if self._client is None:
-            self._client = await self._session.create_client(
-                "s3",
-                endpoint_url=self.endpoint_url,
-                aws_access_key_id=self.access_key_id,
-                aws_secret_access_key=self.secret_access_key,
-                region_name=self.region_name,
-            )
-        return self._client
-
-    async def close_client(self):
-        if self._client is not None:
-            await self._client.__aexit__(None, None, None)
-            self._client = None
+    @staticmethod
+    def _get_client_params():
+        return {
+            "service_name": "s3",
+            "endpoint_url": settings.s3.s3_url,
+            "aws_access_key_id": settings.s3.S3_USER,
+            "aws_secret_access_key": settings.s3.S3_PASS,
+            "region_name": "us-east-1",
+        }
 
     @staticmethod
     def generate_file_key(todo_id: int, filename: str) -> str:
@@ -51,46 +39,46 @@ class S3Service:
         content_type: str,
         expires_in: int = 300
     ) -> str:
-        client = await self.get_client()
-        return await client.generate_presigned_url(
-            "put_object",
-            Params={
-                "Bucket": self.bucket_name,
-                "Key": file_key,
-                "ContentType": content_type
-            },
-            ExpiresIn=expires_in,
-            HttpMethod="PUT"
-        )
+        async with self._session.create_client(**self._get_client_params()) as client:
+            return await client.generate_presigned_url(
+                "put_object",
+                Params={
+                    "Bucket": settings.s3.S3_BUCKET,
+                    "Key": file_key,
+                    "ContentType": content_type
+                },
+                ExpiresIn=expires_in,
+                HttpMethod="PUT"
+            )
 
     async def generate_presigned_download_url(
             self,
             file_key: str,
             expires_in: int = 3600
     ) -> str:
-        client = await self.get_client()
-        return await client.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": self.bucket_name,
-                "Key": file_key
-            },
-            ExpiresIn=expires_in
-        )
+        async with self._session.create_client(**self._get_client_params()) as client:
+            return await client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": settings.s3.S3_BUCKET,
+                    "Key": file_key
+                },
+                ExpiresIn=expires_in
+            )
 
-    async def delete_file(self, file_key: str) -> None:
-        client = await self.get_client()
-        await client.delete_object(
-            Bucket=self.bucket_name,
-            Key=file_key
-        )
+    async def _delete_file_from_s3(self, file_key: str) -> None:
+        async with self._session.create_client(**self._get_client_params()) as client:
+            await client.delete_object(
+                Bucket=settings.s3.S3_BUCKET,
+                Key=file_key
+            )
 
     async def delete_attachment(self, session: AsyncSession, attachment_id: int) -> dict[str, Any]:
         attachment = await self.attachment_repo.get_one(session, attachment_id)
         if attachment is None:
             raise HTTPAttachmentNotFoundException
 
-        await self.delete_file(attachment.storage_key)
+        await self._delete_file_from_s3(attachment.storage_key)
         await self.attachment_repo.delete_one(session, attachment_id)
 
         return {"message": "File deleted"}

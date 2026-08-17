@@ -49,7 +49,7 @@ HTTPToDoAlreadyExistsException = HTTPConflictException(detail="ToDo already exis
 HTTPToDoVersionMismatchException = HTTPConflictException
 
 
-HTTPTooLargeException = partial(HTTPException, status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+HTTPTooLargeException = partial(HTTPException, status_code=status.HTTP_413_CONTENT_TOO_LARGE)
 HTTPAttachmentTooLargeException = HTTPTooLargeException(detail="Payload too large")
 
 
