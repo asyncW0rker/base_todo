@@ -7,7 +7,8 @@ from aiobotocore.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.schemas import AttachmentUploadRequest
-from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentUnsupportedMedia
+from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentUnsupportedMedia, \
+    HTTPAttachmentNotFoundException
 from app.repos.attachment_repo import AttachmentRepository
 from app.utils.config import settings
 
@@ -84,11 +85,21 @@ class S3Service:
             Key=file_key
         )
 
+    async def delete_attachment(self, session: AsyncSession, attachment_id: int) -> dict[str, Any]:
+        attachment = await self.attachment_repo.get_one(session, attachment_id)
+        if attachment is None:
+            raise HTTPAttachmentNotFoundException
+
+        await self.delete_file(attachment.storage_key)
+        await self.attachment_repo.delete_one(session, attachment_id)
+
+        return {"message": "File deleted"}
+
     async def request_upload(
         self,
+        session: AsyncSession,
         todo_id: int,
         file_info: AttachmentUploadRequest,
-        session: AsyncSession,
     ):
         if file_info.size > settings.s3.S3_MAX_SIZE:
             raise HTTPAttachmentTooLargeException
