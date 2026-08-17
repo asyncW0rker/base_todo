@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import Attachment
 from app.database.schemas import AttachmentUploadRequest
 from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentNotFoundException, \
-    HTTPToDoNotFoundException
+    HTTPToDoNotFoundException, FileNotFoundException, TooLargeException
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.utils.config import settings
@@ -56,6 +56,24 @@ class AttachmentService:
             "storage_key": storage_key,
             "upload_url": upload_url
         }
+
+    async def confirm_upload(self, session: AsyncSession, attachment_id: int):
+        attachment = await self.attachment_repo.get_one(session, attachment_id)
+        if attachment is None:
+            raise HTTPAttachmentNotFoundException
+
+        try:
+            await self.s3_manager.verify_file_size(attachment.storage_key, settings.s3.S3_MAX_SIZE)
+        except FileNotFoundException:
+            raise HTTPAttachmentNotFoundException
+        except TooLargeException:
+            await self.s3_manager.delete_file(attachment.storage_key)
+            raise HTTPAttachmentTooLargeException
+
+        attachment.is_uploaded = True
+        await session.commit()
+
+        return {"message": "Uploaded successfully"}
 
     async def delete_attachment(self, session: AsyncSession, attachment_id: int) -> dict[str, Any]:
         attachment = await self.attachment_repo.get_one(session, attachment_id)

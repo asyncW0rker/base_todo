@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from aiobotocore.session import AioSession, get_session
 
+from app.errors.exceptions import TooLargeException, FileNotFoundException
 from app.utils.config import settings
 
 
@@ -25,12 +26,7 @@ class S3Manager:
         extension = filename.split(".")[-1] if "." in filename else "bin"
         return f"todos/{todo_id}/attachments/{uuid4()}.{extension}"
 
-    async def generate_presigned_upload_url(
-        self,
-        file_key: str,
-        content_type: str,
-        expires_in: int = 300
-    ) -> str:
+    async def generate_presigned_upload_url(self, file_key: str, content_type: str, expires_in: int = 300) -> str:
         async with self._session.create_client(**self._get_client_params()) as client:
             return await client.generate_presigned_url(
                 "put_object",
@@ -43,11 +39,7 @@ class S3Manager:
                 HttpMethod="PUT"
             )
 
-    async def generate_presigned_download_url(
-        self,
-        file_key: str,
-        expires_in: int = 3600
-    ) -> str:
+    async def generate_presigned_download_url(self, file_key: str, expires_in: int = 3600) -> str:
         async with self._session.create_client(**self._get_client_params()) as client:
             return await client.generate_presigned_url(
                 "get_object",
@@ -57,6 +49,16 @@ class S3Manager:
                 },
                 ExpiresIn=expires_in
             )
+
+    async def verify_file_size(self, file_key: str, max_size: int):
+        async with self._session.create_client(**self._get_client_params()) as client:
+            try:
+                response = await client.head_object(Bucket=settings.s3.S3_BUCKET, Key=file_key)
+                file_size = response["ContentLength"]
+                if file_size > max_size:
+                    raise TooLargeException(f"File has {file_size} bytes but is too large, max is {max_size}")
+            except client.exceptions.NoSuchKey:
+                raise FileNotFoundException("File not found")
 
     async def delete_file(self, file_key: str) -> None:
         async with self._session.create_client(**self._get_client_params()) as client:
