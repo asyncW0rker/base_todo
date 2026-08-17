@@ -1,9 +1,7 @@
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
-from uuid import uuid4
 
-from aiobotocore.session import get_session, AioSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Attachment
@@ -13,12 +11,12 @@ from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmen
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.utils.config import settings
-from app.utils.s3_manager import S3Manager
+from app.utils.s3_manager import S3Manager, get_s3_manager
 
 
 @dataclass
 class AttachmentService:
-    s3_manager: S3Manager = S3Manager()
+    s3_manager: S3Manager = field(default_factory=get_s3_manager)
     attachment_repo: AttachmentRepository = AttachmentRepository()
     todo_repo: ToDoRepository = ToDoRepository()
 
@@ -58,7 +56,12 @@ class AttachmentService:
         }
 
     async def confirm_upload(self, session: AsyncSession, attachment_id: int):
-        attachment = await self.attachment_repo.get_one(session, attachment_id)
+        attachment = await self.attachment_repo.update_one(
+            session=session,
+            item_id=attachment_id,
+            filter_params=dict(),
+            update_data={"is_uploaded": True}
+        )
         if attachment is None:
             raise HTTPAttachmentNotFoundException
 
@@ -68,10 +71,8 @@ class AttachmentService:
             raise HTTPAttachmentNotFoundException
         except TooLargeException:
             await self.s3_manager.delete_file(attachment.storage_key)
+            await self.attachment_repo.delete_one(session, attachment_id)
             raise HTTPAttachmentTooLargeException
-
-        attachment.is_uploaded = True
-        await session.commit()
 
         return {"message": "Uploaded successfully"}
 

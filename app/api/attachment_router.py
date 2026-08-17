@@ -27,6 +27,15 @@ async def create_attachment_request_upload(
     return await attachment_service.request_upload(session, todo_id, file_data)
 
 
+@router.post("/attachments/{attachment_id}/confirm")
+async def confirm_upload_attachment(
+    attachment_id: int,
+    session: AsyncSession = Depends(get_session),
+    attachment_service: AttachmentService = Depends(get_attachment_service),
+):
+    return await attachment_service.confirm_upload(session, attachment_id)
+
+
 @router.delete("/attachments/{attachment_id}")
 async def delete_attachment(
     attachment_id: int,

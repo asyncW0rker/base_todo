@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
+from functools import lru_cache
 from uuid import uuid4
 
 from aiobotocore.session import AioSession, get_session
+from botocore.exceptions import ClientError
 
 from app.errors.exceptions import TooLargeException, FileNotFoundException
 from app.utils.config import settings
@@ -57,7 +59,7 @@ class S3Manager:
                 file_size = response["ContentLength"]
                 if file_size > max_size:
                     raise TooLargeException(f"File has {file_size} bytes but is too large, max is {max_size}")
-            except client.exceptions.NoSuchKey:
+            except (client.exceptions.NoSuchKey, ClientError):
                 raise FileNotFoundException("File not found")
 
     async def delete_file(self, file_key: str) -> None:
@@ -66,3 +68,8 @@ class S3Manager:
                 Bucket=settings.s3.S3_BUCKET,
                 Key=file_key
             )
+
+
+@lru_cache
+def get_s3_manager():
+    return S3Manager()
