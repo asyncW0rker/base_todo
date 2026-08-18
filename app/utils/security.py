@@ -6,14 +6,14 @@ from typing import Any
 
 import bcrypt
 import jwt
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 
 from app.errors.exceptions import JWTExpiredTokenException, JWTInvalidTokenException
 from app.utils.config import settings
 
 
-oauth_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
+# oauth_scheme = OAuth2PasswordBearer(tokenUrl="login")
+auth_2_scheme = HTTPBearer()
 
 class PasswordManager:
     DUMMY_HASH = bcrypt.hashpw(settings.security.DUMMY_HASH.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
