@@ -5,13 +5,13 @@ from fastapi import Depends, Path
 from app.database.schemas import UserRole
 from app.errors.exceptions import HTTPRolePermissionDeniedException, HTTPPrivatePermissionDeniedException
 from app.services.auth_service import AuthService, get_auth_service
-from app.utils.security import oauth_scheme
+from app.utils.security import get_token
 from app.utils.utils import get_current_user_payload
 
 
 def role_permission_required(required_role: UserRole = UserRole.ADMIN):
     def check_permission(
-        token: str = Depends(oauth_scheme),
+        token: str = Depends(get_token),
         auth_service: AuthService = Depends(get_auth_service),
     ):
         payload = auth_service.decode_access_token(token)

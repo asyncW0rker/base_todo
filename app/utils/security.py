@@ -6,13 +6,19 @@ from typing import Any
 
 import bcrypt
 import jwt
-from fastapi.security import OAuth2PasswordBearer, HTTPBearer
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPBasicCredentials
 
 from app.errors.exceptions import JWTExpiredTokenException, JWTInvalidTokenException
 from app.utils.config import settings
 
 
-oauth_scheme = OAuth2PasswordBearer(tokenUrl="login")
+# get_token = OAuth2PasswordBearer(tokenUrl="login")
+auth_scheme = HTTPBearer()
+
+
+def get_token(credentials: HTTPBasicCredentials = Depends(auth_scheme)) -> str:
+    return credentials.credentials
 
 
 class PasswordManager:

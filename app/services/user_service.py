@@ -35,8 +35,8 @@ class UserService:
         return await self.repo.get_all_with_todos(session)
 
     async def update_user(self, session: AsyncSession, user_id: int, update_data: UserUpdate):
-        changed_user = await self.repo.update_one(session, user_id, update_data.model_dump())
-        if changed_user == 0:
+        changed_user = await self.repo.update_one(session, user_id, dict(), update_data.model_dump())
+        if changed_user is None:
             raise HTTPUserNotFoundException
         return {"message": "User updated"}
 
