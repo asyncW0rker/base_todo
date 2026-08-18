@@ -76,6 +76,14 @@ class AttachmentService:
 
         return {"message": "Uploaded successfully"}
 
+    async def download_attachment(self, session: AsyncSession, attachment_id: int):
+        attachment = await self.attachment_repo.get_one(session, attachment_id)
+        if attachment is None or not attachment.is_uploaded:
+            raise HTTPAttachmentNotFoundException
+
+        download_url = await self.s3_manager.generate_presigned_download_url(attachment.storage_key)
+        return {"download_url": download_url}
+
     async def delete_attachment(self, session: AsyncSession, attachment_id: int) -> dict[str, Any]:
         attachment = await self.attachment_repo.get_one(session, attachment_id)
         if attachment is None:

@@ -36,6 +36,15 @@ async def confirm_upload_attachment(
     return await attachment_service.confirm_upload(session, attachment_id)
 
 
+@router.get("/attachments/{attachment_id}/download")
+async def download_attachment(
+    attachment_id: int,
+    session: AsyncSession = Depends(get_session),
+    attachment_service: AttachmentService = Depends(get_attachment_service),
+):
+    return await attachment_service.download_attachment(session, attachment_id)
+
+
 @router.delete("/attachments/{attachment_id}")
 async def delete_attachment(
     attachment_id: int,
