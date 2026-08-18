@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import Any
 
-from sqlalchemy import ForeignKey, Enum, Computed, Index, func, text
+from sqlalchemy import ForeignKey, Enum, Computed, Index, func, text, String
 from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,7 +13,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str]
+    username: Mapped[str] = mapped_column(String, unique=True)
     password: Mapped[str]
     role: Mapped[str] = mapped_column(Enum(UserRole), default=UserRole.USER)
 

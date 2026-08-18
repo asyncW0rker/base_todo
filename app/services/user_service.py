@@ -3,6 +3,7 @@ from typing import Any
 
 from functools import lru_cache
 from sqlalchemy import Sequence
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
@@ -35,9 +36,13 @@ class UserService:
         return await self.repo.get_all_with_todos(session)
 
     async def update_user(self, session: AsyncSession, user_id: int, update_data: UserUpdate):
-        changed_user = await self.repo.update_one(session, user_id, dict(), update_data.model_dump())
-        if changed_user is None:
-            raise HTTPUserNotFoundException
+        try:
+            changed_user = await self.repo.update_one(session, user_id, dict(), update_data.model_dump())
+            if changed_user is None:
+                raise HTTPUserNotFoundException
+        except IntegrityError:
+            raise HTTPUserAlreadyExistsException
+
         return {"message": "User updated"}
 
     async def delete_user(self, session: AsyncSession, user_id: int) -> dict:

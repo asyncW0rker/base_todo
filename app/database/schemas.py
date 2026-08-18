@@ -216,7 +216,7 @@ class UserBase(BaseModel):
 
 
 class UserWithRole(UserBase):
-    role: UserRole = UserRole.USER
+    role: UserRole
 
 
 class UserCreate(UserWithRole):
