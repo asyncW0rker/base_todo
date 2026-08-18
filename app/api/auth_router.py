@@ -7,14 +7,16 @@ from app.services.auth_service import AuthService, get_auth_service
 from app.services.user_service import UserService, get_user_service
 from app.utils.dependencies import admin_role_required
 
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post(
     "/register",
+    status_code=status.HTTP_201_CREATED,
     response_model=UserOutput,
     responses={
-        status.HTTP_200_OK: {"model": UserOutput},
+        status.HTTP_201_CREATED: {"model": UserOutput},
         status.HTTP_409_CONFLICT: {"model": HTTPErrorDetail},
     }
 )
@@ -63,9 +65,11 @@ async def refresh_token(
     response_model=Message,
     responses={
         status.HTTP_200_OK: {"model": Message},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     },
-    # dependencies=[admin_role_required],
+    dependencies=[admin_role_required],
 )
 async def revoke_token(
     user_id: int,

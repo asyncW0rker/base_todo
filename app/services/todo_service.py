@@ -101,7 +101,7 @@ class ToDoService:
             session=session, items_ids=todos_ids, filter_params=filter_params, update_data=update_data_dict
         )
         return {
-            "updated_count": changed_todos_count
+            "message": f"Updated_count: {changed_todos_count}"
         }
 
     async def delete_todo(self, session: AsyncSession, todo_id: int):

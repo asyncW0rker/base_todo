@@ -8,6 +8,7 @@ from app.database.db import get_session
 from app.database.schemas import ToDoAnalyticsFilterParams, AnalyticsJobAccepted, AnalyticsJobOutput, \
     AnalyticsJobStatus, HTTPErrorDetail
 from app.services.analytics_service import AnalyticsService, get_analytics_service
+from app.utils.dependencies import manager_role_required
 
 
 router = APIRouter(prefix="/todos/analytics", tags=["analytics"])
@@ -15,9 +16,14 @@ router = APIRouter(prefix="/todos/analytics", tags=["analytics"])
 
 @router.post(
     "/compute",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_202_ACCEPTED,
     response_model=AnalyticsJobAccepted,
-    # dependencies=[manager_role_required],
+    responses={
+        status.HTTP_202_ACCEPTED: {"model": AnalyticsJobAccepted},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
+    },
+    dependencies=[manager_role_required],
 )
 async def compute_todos_analytics(
     filter_params: ToDoAnalyticsFilterParams,
@@ -36,6 +42,8 @@ async def compute_todos_analytics(
     responses={
         status.HTTP_200_OK: {"model": AnalyticsJobOutput},
         status.HTTP_202_ACCEPTED: {"model": AnalyticsJobAccepted},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     }
 )
@@ -61,6 +69,8 @@ async def get_todos_analytics(
     response_model=AnalyticsJobOutput,
     responses={
         status.HTTP_200_OK: {"model": AnalyticsJobOutput},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     }
 )

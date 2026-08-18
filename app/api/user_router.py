@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
-from app.database.schemas import UserUpdate, UserWithTodos
+from app.database.schemas import UserUpdate, UserWithTodos, HTTPErrorDetail, Message
 from app.services.user_service import UserService, get_user_service
 from app.utils.dependencies import admin_role_required, user_ownership_required
 
@@ -13,6 +13,11 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.get(
     "/",
     response_model=list[UserWithTodos],
+    responses={
+        status.HTTP_200_OK: {"model": list[UserWithTodos]},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
+    },
     dependencies=[admin_role_required],
 )
 async def get_users(
@@ -25,6 +30,12 @@ async def get_users(
 @router.get(
     "/{user_id}",
     response_model=UserWithTodos,
+    responses={
+        status.HTTP_200_OK: {"model": UserWithTodos},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
+        status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
+    },
     dependencies=[user_ownership_required]
 )
 async def get_user(
@@ -37,6 +48,14 @@ async def get_user(
 
 @router.put(
     "/{user_id}",
+    response_model=Message,
+    responses={
+        status.HTTP_200_OK: {"model": Message},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
+        status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
+        status.HTTP_409_CONFLICT: {"model": HTTPErrorDetail},
+    },
     dependencies=[user_ownership_required],
 )
 async def update_user(
@@ -50,6 +69,13 @@ async def update_user(
 
 @router.delete(
     "/{user_id}",
+    response_model=Message,
+    responses={
+        status.HTTP_200_OK: {"model": Message},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
+        status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
+    },
     dependencies=[admin_role_required],
 )
 async def delete_user(
@@ -62,6 +88,12 @@ async def delete_user(
 
 @router.delete(
     "/",
+    response_model=Message,
+    responses={
+        status.HTTP_200_OK: {"model": Message},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
+    },
     dependencies=[admin_role_required],
 )
 async def delete_users(

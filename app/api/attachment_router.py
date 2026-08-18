@@ -13,6 +13,11 @@ router = APIRouter(tags=["attachments"])
 @router.get(
     "/attachments/",
     response_model=list[AttachmentOutput],
+    responses={
+        status.HTTP_200_OK: {"model": list[AttachmentOutput]},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
+    }
 )
 async def get_attachments(
     session: AsyncSession = Depends(get_session),
@@ -23,9 +28,12 @@ async def get_attachments(
 
 @router.post(
     "/todos/{todo_id}/attachments/request_upload",
+    status_code=status.HTTP_202_ACCEPTED,
     response_model=AttachmentUploadURL,
     responses={
-        status.HTTP_200_OK: {"model": AttachmentUploadURL},
+        status.HTTP_202_ACCEPTED: {"model": AttachmentUploadURL},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
         status.HTTP_413_CONTENT_TOO_LARGE: {"model": HTTPErrorDetail},
     }
@@ -41,9 +49,12 @@ async def create_attachment_request_upload(
 
 @router.post(
     "/attachments/{attachment_id}/confirm",
+    status_code=status.HTTP_201_CREATED,
     response_model=Message,
     responses={
-        status.HTTP_200_OK: {"model": Message},
+        status.HTTP_201_CREATED: {"model": Message},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
         status.HTTP_413_CONTENT_TOO_LARGE: {"model": HTTPErrorDetail},
     }
@@ -61,6 +72,8 @@ async def confirm_upload_attachment(
     response_model=AttachmentDownloadURL,
     responses={
         status.HTTP_200_OK: {"model": AttachmentDownloadURL},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     }
 )
@@ -77,6 +90,8 @@ async def download_attachment(
     response_model=Message,
     responses={
         status.HTTP_200_OK: {"model": Message},
+        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
+        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     }
 )
