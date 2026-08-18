@@ -24,6 +24,10 @@ class HTTPErrorDetail(BaseModel):
     detail: str
 
 
+class Message(BaseModel):
+    message: str
+
+
 class BaseOrderingParams(BaseModel):
     limit: int = Field(10, gt=0, le=100)
     offset: int = Field(0, ge=0)
@@ -180,6 +184,30 @@ class AttachmentUploadRequest(BaseModel):
     filename: str
     size: int
     content_type: AttachmentContentType
+
+
+class AttachmentOutput(BaseModel):
+    id: int
+    todo_id: int
+    storage_key: str | None
+    filename: str
+    size: int
+    content_type: AttachmentContentType
+    is_uploaded: bool
+    created_at: dt.datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AttachmentUploadURL(BaseModel):
+    storage_key: str
+    upload_url: str
+
+
+class AttachmentDownloadURL(BaseModel):
+    storage_key: str
+    download_url: str
 
 
 class UserBase(BaseModel):

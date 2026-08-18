@@ -82,7 +82,11 @@ class AttachmentService:
             raise HTTPAttachmentNotFoundException
 
         download_url = await self.s3_manager.generate_presigned_download_url(attachment.storage_key)
-        return {"download_url": download_url}
+
+        return {
+            "storage_key": attachment.storage_key,
+            "download_url": download_url
+        }
 
     async def delete_attachment(self, session: AsyncSession, attachment_id: int) -> dict[str, Any]:
         attachment = await self.attachment_repo.get_one(session, attachment_id)
