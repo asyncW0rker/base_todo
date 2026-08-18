@@ -94,7 +94,7 @@ class AuthService:
         }
 
     async def revoke_token(self, session: AsyncSession, user_id: int):
-        deleted_count = await self.token_repo.delete_one_by_user_id(session, user_id)
+        deleted_count = await self.token_repo.delete_by_user_id(session, user_id)
         if deleted_count == 0:
             raise HTTPTokenNotFoundException
 

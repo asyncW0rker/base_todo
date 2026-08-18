@@ -59,6 +59,10 @@ async def get_todos_analytics(
 @router.get(
     "/",
     response_model=AnalyticsJobOutput,
+    responses={
+        status.HTTP_200_OK: {"model": AnalyticsJobOutput},
+        status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
+    }
 )
 async def get_todos_analytics_by_params(
     filter_params: Annotated[ToDoAnalyticsFilterParams, Depends()],

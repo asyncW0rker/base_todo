@@ -243,3 +243,8 @@ class AuthData(UserBase):
 
 class RefreshToken(BaseModel):
     token: str
+
+
+class AuthOutput(BaseModel):
+    access_token: str
+    refresh_token: str

@@ -19,7 +19,7 @@ class TokenRepository(BaseRepository):
         query = delete(self.model).where(self.model.id == item_id)
         await session.execute(query)
 
-    async def delete_one_by_user_id(self, session: AsyncSession, user_id: int) -> int:
+    async def delete_by_user_id(self, session: AsyncSession, user_id: int) -> int:
         query = delete(self.model).where(self.model.user_id == user_id)
         result = await session.execute(query)
         await session.commit()
