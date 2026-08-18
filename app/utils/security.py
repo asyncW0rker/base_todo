@@ -12,8 +12,8 @@ from app.errors.exceptions import JWTExpiredTokenException, JWTInvalidTokenExcep
 from app.utils.config import settings
 
 
-# oauth_scheme = OAuth2PasswordBearer(tokenUrl="login")
-auth_2_scheme = HTTPBearer()
+oauth_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 
 class PasswordManager:
     DUMMY_HASH = bcrypt.hashpw(settings.security.DUMMY_HASH.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
