@@ -42,6 +42,36 @@ class BaseSearchParams(BaseModel):
     language: QueryLanguage = QueryLanguage.RUSSIAN
 
 
+class AttachmentUploadRequest(BaseModel):
+    filename: str
+    size: int
+    content_type: AttachmentContentType
+
+
+class AttachmentOutput(BaseModel):
+    id: int
+    todo_id: int
+    storage_key: str | None
+    filename: str
+    size: int
+    content_type: AttachmentContentType
+    is_uploaded: bool
+    created_at: dt.datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AttachmentUploadURL(BaseModel):
+    storage_key: str
+    upload_url: str
+
+
+class AttachmentDownloadURL(BaseModel):
+    storage_key: str
+    download_url: str
+
+
 class ToDoBase(BaseModel):
     title: str
     description: str
@@ -49,7 +79,7 @@ class ToDoBase(BaseModel):
 
 
 class ToDoCreate(ToDoBase):
-    pass
+    attachment_meta: list[AttachmentUploadRequest] = Field(default_factory=list)
 
 
 class ToDoUpdate(ToDoBase):
@@ -106,6 +136,11 @@ class ToDoOutput(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ToDoWithAttachments(BaseModel):
+    todo: ToDoOutput
+    upload_urls: list[AttachmentUploadURL]
 
 
 ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput, ["created",])
@@ -178,36 +213,6 @@ class AnalyticsJobOutput(BaseModel):
 class AnalyticsJobAccepted(BaseModel):
     job_id: int
     status: AnalyticsJobStatus = AnalyticsJobStatus.PENDING
-
-
-class AttachmentUploadRequest(BaseModel):
-    filename: str
-    size: int
-    content_type: AttachmentContentType
-
-
-class AttachmentOutput(BaseModel):
-    id: int
-    todo_id: int
-    storage_key: str | None
-    filename: str
-    size: int
-    content_type: AttachmentContentType
-    is_uploaded: bool
-    created_at: dt.datetime
-
-    class Config:
-        from_attributes = True
-
-
-class AttachmentUploadURL(BaseModel):
-    storage_key: str
-    upload_url: str
-
-
-class AttachmentDownloadURL(BaseModel):
-    storage_key: str
-    download_url: str
 
 
 class UserBase(BaseModel):

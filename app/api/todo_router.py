@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoOutput, ToDoOrderingParams, ToDoFilterParams, \
-    ToDoStatusUpdate, ToDoPatch, ToDoSearchParams, HTTPErrorDetail, Message
+    ToDoStatusUpdate, ToDoPatch, ToDoSearchParams, HTTPErrorDetail, Message, ToDoWithAttachments
 from app.services.todo_service import ToDoService, get_todo_service
 from app.utils.dependencies import admin_role_required, auth_required, manager_role_required
 from app.utils.utils import get_current_user_payload
@@ -64,9 +64,9 @@ async def get_todo(
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=ToDoOutput,
+    response_model=ToDoWithAttachments,
     responses={
-        status.HTTP_201_CREATED: {"model": ToDoOutput},
+        status.HTTP_201_CREATED: {"model": ToDoWithAttachments},
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
