@@ -4,10 +4,10 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Attachment
-from app.database.schemas import AttachmentUploadRequest
+from app.database.models import Attachment, ToDo
+from app.database.schemas import AttachmentUploadRequest, UserRole
 from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentNotFoundException, \
-    HTTPToDoNotFoundException, FileNotFoundException, TooLargeException
+    HTTPToDoNotFoundException, FileNotFoundException, TooLargeException, HTTPPrivatePermissionDeniedException
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.utils.config import settings
@@ -20,6 +20,15 @@ class AttachmentService:
     attachment_repo: AttachmentRepository = AttachmentRepository()
     todo_repo: ToDoRepository = ToDoRepository()
 
+    @staticmethod
+    def _check_user_permission(
+        allowed_user_id: int,
+        current_user_info: dict[str, Any],
+    ):
+        user_id, user_role = int(current_user_info.get("sub")), current_user_info.get("role")
+        if user_role == UserRole.USER and user_id != allowed_user_id:
+            raise HTTPPrivatePermissionDeniedException
+
     async def get_all_attachments(self, session: AsyncSession) -> list[Attachment]:
         return await self.attachment_repo.get_all(session)
 
@@ -28,6 +37,7 @@ class AttachmentService:
         session: AsyncSession,
         todo_id: int,
         file_info: AttachmentUploadRequest,
+        current_user_info: dict[str, Any],
     ):
         if file_info.size > settings.s3.S3_MAX_SIZE:
             raise HTTPAttachmentTooLargeException
@@ -35,6 +45,8 @@ class AttachmentService:
         todo = await self.todo_repo.get_one(session, todo_id)
         if todo is None:
             raise HTTPToDoNotFoundException
+
+        self._check_user_permission(todo.user_id, current_user_info)
 
         storage_key = self.s3_manager.generate_file_key(todo_id, file_info.filename)
 
@@ -88,10 +100,17 @@ class AttachmentService:
             "download_url": download_url
         }
 
-    async def delete_attachment(self, session: AsyncSession, attachment_id: int) -> dict[str, Any]:
-        attachment = await self.attachment_repo.get_one(session, attachment_id)
+    async def delete_attachment(
+        self,
+        session: AsyncSession,
+        attachment_id: int,
+        current_user_info: dict[str, Any],
+    ) -> dict[str, Any]:
+        attachment = await self.attachment_repo.get_one_with_related_model(session, attachment_id)
         if attachment is None:
             raise HTTPAttachmentNotFoundException
+
+        self._check_user_permission(attachment.todo.user_id, current_user_info)
 
         await self.s3_manager.delete_file(attachment.storage_key)
         await self.attachment_repo.delete_one(session, attachment_id)

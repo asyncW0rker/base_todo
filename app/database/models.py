@@ -35,6 +35,8 @@ class ToDo(Base):
     user_id: Mapped[int | None] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=True)
     user: Mapped[User] = relationship(back_populates="todos")
 
+    attachments: Mapped[list["Attachment"]] = relationship(back_populates="todo")
+
     search_vector: Mapped[TSVECTOR] = mapped_column(
         TSVECTOR,
         Computed(
@@ -90,3 +92,4 @@ class Attachment(Base):
     is_uploaded: Mapped[bool] = mapped_column(default=False)
 
     todo_id: Mapped[int] = mapped_column(ForeignKey(ToDo.id, ondelete="CASCADE"), nullable=False)
+    todo: Mapped[ToDo] = relationship(back_populates="attachments", lazy="noload")

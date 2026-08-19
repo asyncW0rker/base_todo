@@ -13,7 +13,6 @@ from app.errors.exceptions import JWTExpiredTokenException, JWTInvalidTokenExcep
 from app.utils.config import settings
 
 
-# get_token = OAuth2PasswordBearer(tokenUrl="login")
 auth_scheme = HTTPBearer()
 
 

@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,7 +7,8 @@ from app.database.db import get_session
 from app.database.schemas import AttachmentUploadRequest, Message, HTTPErrorDetail, AttachmentOutput, \
     AttachmentUploadURL, AttachmentDownloadURL
 from app.services.attachment_service import AttachmentService, get_attachment_service
-
+from app.utils.dependencies import admin_role_required, auth_required
+from app.utils.utils import get_current_user_payload
 
 router = APIRouter(tags=["attachments"])
 
@@ -17,7 +20,8 @@ router = APIRouter(tags=["attachments"])
         status.HTTP_200_OK: {"model": list[AttachmentOutput]},
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
-    }
+    },
+    dependencies=[admin_role_required],
 )
 async def get_attachments(
     session: AsyncSession = Depends(get_session),
@@ -36,15 +40,17 @@ async def get_attachments(
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
         status.HTTP_413_CONTENT_TOO_LARGE: {"model": HTTPErrorDetail},
-    }
+    },
+    dependencies=[auth_required],
 )
 async def create_attachment_request_upload(
     todo_id: int,
     file_data: AttachmentUploadRequest,
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     attachment_service: AttachmentService = Depends(get_attachment_service),
 ):
-    return await attachment_service.request_upload(session, todo_id, file_data)
+    return await attachment_service.request_upload(session, todo_id, file_data, current_user_info)
 
 
 @router.post(

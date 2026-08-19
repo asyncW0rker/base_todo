@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
-    ToDoAnalyticsFilterParams, ToDoAnalyticsOutput, ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams
-from app.errors.exceptions import TimezoneException, HTTPUserNotFoundException, HTTPToDoNotFoundException, \
-    HTTPInvalidTimezoneException, HTTPToDoVersionMismatchException
+    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams
+from app.errors.exceptions import HTTPUserNotFoundException, HTTPToDoNotFoundException, \
+    HTTPToDoVersionMismatchException
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
 
@@ -57,9 +57,8 @@ class ToDoService:
         current_user_info: dict[str, Any],
     ):
         filter_params_dict = filter_params.model_dump()
-        if current_user_info.get("role") == UserRole.USER:
-            filter_params_dict["user_id"] = int(current_user_info.get("sub"))
-
+        user_filter_params = self._get_filter_params_from_user_data(current_user_info)
+        filter_params_dict.update(user_filter_params)
         return await self.repo.get_many(
             session=session,
             ordering_params=ordering_params.model_dump(),
