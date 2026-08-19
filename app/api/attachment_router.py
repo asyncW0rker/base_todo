@@ -10,6 +10,7 @@ from app.services.attachment_service import AttachmentService, get_attachment_se
 from app.utils.dependencies import admin_role_required, auth_required
 from app.utils.utils import get_current_user_payload
 
+
 router = APIRouter(tags=["attachments"])
 
 
@@ -63,7 +64,7 @@ async def create_attachment_request_upload(
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
         status.HTTP_413_CONTENT_TOO_LARGE: {"model": HTTPErrorDetail},
-    }
+    },
 )
 async def confirm_upload_attachment(
     attachment_id: int,
@@ -81,7 +82,7 @@ async def confirm_upload_attachment(
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
-    }
+    },
 )
 async def download_attachment(
     attachment_id: int,
@@ -99,11 +100,13 @@ async def download_attachment(
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
-    }
+    },
+    dependencies=[auth_required],
 )
 async def delete_attachment(
     attachment_id: int,
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     attachment_service: AttachmentService = Depends(get_attachment_service),
 ):
-    return await attachment_service.delete_attachment(session, attachment_id)
+    return await attachment_service.delete_attachment(session, attachment_id, current_user_info)

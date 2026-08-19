@@ -50,10 +50,11 @@ class AttachmentService:
 
         storage_key = self.s3_manager.generate_file_key(todo_id, file_info.filename)
 
-        attachment_data = file_info.model_dump()
-        attachment_data["storage_key"] = storage_key
-        attachment_data["todo_id"] = todo_id
-
+        attachment_data = {
+            **file_info.model_dump(),
+            "storage_key": storage_key,
+            "todo_id": todo_id,
+        }
         await self.attachment_repo.create_one(session, attachment_data)
 
         upload_url = await self.s3_manager.generate_presigned_upload_url(
