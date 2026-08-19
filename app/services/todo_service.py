@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
-    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams, ToDoWithAttachments
+    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams, ToDoWithUploads
 from app.errors.exceptions import HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPToDoVersionMismatchException
 from app.repos.attachment_repo import AttachmentRepository
@@ -33,18 +33,18 @@ class ToDoService:
         filter_params = {"user_id": int(user_id)} if user_role == UserRole.USER else {}
         return filter_params
 
-    async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDoWithAttachments:
+    async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDoWithUploads:
         if creation_data.user_id is not None:
             await self._check_user_existence(session, creation_data.user_id)
 
         creation_params = creation_data.model_dump()
-        attachment_meta = creation_params.pop("attachment_meta", [])
+        attachments_meta = creation_params.pop("attachments_meta", [])
         upload_urls = []
         attachments_data = []
 
         todo = await self.todo_repo.create_one_uncommited(session, creation_params)
 
-        for attachment in attachment_meta:
+        for attachment in attachments_meta:
             storage_key = self.s3_manager.generate_file_key(todo.id, attachment["filename"])
             upload_url = await self.s3_manager.generate_presigned_upload_url(storage_key, attachment["content_type"])
             upload_urls.append({
@@ -59,7 +59,7 @@ class ToDoService:
 
         await self.attachment_repo.create_many(session, attachments_data)
 
-        return ToDoWithAttachments(
+        return ToDoWithUploads(
             todo=todo,
             upload_urls=upload_urls,
         )

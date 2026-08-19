@@ -79,7 +79,7 @@ class ToDoBase(BaseModel):
 
 
 class ToDoCreate(ToDoBase):
-    attachment_meta: list[AttachmentUploadRequest] = Field(default_factory=list)
+    attachments_meta: list[AttachmentUploadRequest] = Field(default_factory=list)
 
 
 class ToDoUpdate(ToDoBase):
@@ -138,7 +138,7 @@ class ToDoOutput(BaseModel):
         from_attributes = True
 
 
-class ToDoWithAttachments(BaseModel):
+class ToDoWithUploads(BaseModel):
     todo: ToDoOutput
     upload_urls: list[AttachmentUploadURL]
 
