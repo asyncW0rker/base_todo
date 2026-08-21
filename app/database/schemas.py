@@ -253,3 +253,10 @@ class RefreshToken(BaseModel):
 class AuthOutput(BaseModel):
     access_token: str
     refresh_token: str
+
+
+class ParsedRow(BaseModel):
+    row_number: int
+    data: dict[str, Any]
+    is_valid: bool = True
+    error: str | None = None
