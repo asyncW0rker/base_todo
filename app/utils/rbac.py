@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import Depends, Path
 
 from app.database.schemas import UserRole
-from app.errors.exceptions import HTTPRolePermissionDeniedException, HTTPPrivatePermissionDeniedException
+from app.errors.http_exceptions import HTTPRolePermissionDeniedException, HTTPPrivatePermissionDeniedException
 from app.services.auth_service import AuthService, get_auth_service
 from app.utils.security import get_token
 from app.utils.utils import get_current_user_payload

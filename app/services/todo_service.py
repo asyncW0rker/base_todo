@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
     ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams, ToDoWithUploads
-from app.errors.exceptions import HTTPUserNotFoundException, HTTPToDoNotFoundException, \
+from app.errors.http_exceptions import HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPToDoVersionMismatchException
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository

@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import AnalyticsJob
 from app.database.schemas import ToDoAnalyticsOutput, ToDoAnalyticsFilterParams, JobStatus
-from app.errors.exceptions import TimezoneException, HTTPInvalidTimezoneException, HTTPAnalyticsJobNotFoundException
+from app.errors.http_exceptions import HTTPInvalidTimezoneException, HTTPAnalyticsJobNotFoundException
+from app.errors.exceptions import TimezoneException
 from app.repos.analytics_job_repo import AnalyticsJobRepository
 from app.repos.todo_repo import ToDoRepository
 

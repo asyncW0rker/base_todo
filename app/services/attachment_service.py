@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Attachment, ToDo
 from app.database.schemas import AttachmentUploadRequest, UserRole
-from app.errors.exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentNotFoundException, \
-    HTTPToDoNotFoundException, FileNotFoundException, TooLargeException, HTTPPrivatePermissionDeniedException
+from app.errors.http_exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentNotFoundException, \
+    HTTPToDoNotFoundException, HTTPPrivatePermissionDeniedException
+from app.errors.exceptions import FileNotFoundException, TooLargeException,
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.utils.config import settings

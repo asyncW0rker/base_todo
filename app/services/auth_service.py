@@ -7,8 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
 from app.database.schemas import AuthData, RefreshToken
-from app.errors.exceptions import HTTPWrongCredentialsException, HTTPExpiredTokenException, HTTPInvalidTokenException, \
-    HTTPTokenNotFoundException, JWTExpiredTokenException, JWTInvalidTokenException
+from app.errors.http_exceptions import HTTPWrongCredentialsException, HTTPExpiredTokenException, \
+    HTTPInvalidTokenException, HTTPTokenNotFoundException
+from app.errors.exceptions import JWTExpiredTokenException, JWTInvalidTokenException
 from app.repos.token_repo import TokenRepository
 from app.repos.user_repo import UserRepository
 from app.utils.config import settings

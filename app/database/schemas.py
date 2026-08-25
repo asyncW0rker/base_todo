@@ -4,7 +4,7 @@ from typing import Any
 import pytz
 from pydantic import BaseModel, Field, computed_field, field_validator
 
-from app.errors.exceptions import HTTPValueError
+from app.errors.http_exceptions import HTTPValueError
 from app.utils.enum_fabric import generate_ordering_enum, generate_enum_from_fields
 
 

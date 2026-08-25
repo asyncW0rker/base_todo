@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import User
-from app.errors.exceptions import HTTPUserAlreadyExistsException, HTTPUserNotFoundException
+from app.errors.http_exceptions import HTTPUserAlreadyExistsException, HTTPUserNotFoundException
 from app.repos.user_repo import UserRepository
 from app.database.schemas import UserCreate, UserUpdate
 from app.utils.security import PasswordManager

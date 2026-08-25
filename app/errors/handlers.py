@@ -2,7 +2,7 @@ from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.errors.exceptions import HTTPAttachmentUnsupportedMedia
+from app.errors.http_exceptions import HTTPAttachmentUnsupportedMedia
 
 
 async def pydantic_validation_exception_handler(request: Request, exc: RequestValidationError):
