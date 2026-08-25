@@ -8,7 +8,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import AnalyticsJob
-from app.database.schemas import ToDoAnalyticsOutput, ToDoAnalyticsFilterParams, AnalyticsJobStatus
+from app.database.schemas import ToDoAnalyticsOutput, ToDoAnalyticsFilterParams, JobStatus
 from app.errors.exceptions import TimezoneException, HTTPInvalidTimezoneException, HTTPAnalyticsJobNotFoundException
 from app.repos.analytics_job_repo import AnalyticsJobRepository
 from app.repos.todo_repo import ToDoRepository
@@ -79,14 +79,14 @@ class AnalyticsService:
     ) -> AnalyticsJob:
         try:
             await self.update_analytics_job(session, job_id, {
-                "status": AnalyticsJobStatus.RUNNING,
+                "status": JobStatus.RUNNING,
                 "started_at": dt.datetime.now(dt.UTC),
             })
 
             analytics_data = await self.compute_analytics(session, filter_params)
 
             job = await self.update_analytics_job(session, job_id, {
-                "status": AnalyticsJobStatus.DONE,
+                "status": JobStatus.DONE,
                 "result": analytics_data.model_dump(),
                 "finished_at": dt.datetime.now(dt.UTC),
             })
@@ -94,15 +94,20 @@ class AnalyticsService:
         except Exception:
             await session.rollback()
             await self.update_analytics_job(session, job_id, {
-                "status": AnalyticsJobStatus.FAILED,
+                "status": JobStatus.FAILED,
             })
             raise
 
     async def start_compute_analytics(
-        self, session: AsyncSession, filter_params: ToDoAnalyticsFilterParams, background_tasks: BackgroundTasks,
+        self,
+        session: AsyncSession,
+        filter_params: ToDoAnalyticsFilterParams,
+        background_tasks: BackgroundTasks,
+        current_user_info: dict[str, Any],
     ):
         job_data = {
-            "params": filter_params.model_dump()
+            "params": filter_params.model_dump(),
+            "user_id": int(current_user_info["sub"]),
         }
         analytics_job = await self.analytics_repo.create_one(session, job_data)
         background_tasks.add_task(self.compute_analytics_job, session, filter_params, analytics_job.id)
@@ -124,6 +129,10 @@ class AnalyticsService:
         if analytics_job is None:
             raise HTTPAnalyticsJobNotFoundException
         return analytics_job
+
+    async def delete_all_analytics_jobs(self, session: AsyncSession):
+        await self.analytics_repo.delete_all(session)
+        return {"message": "All analytics jobs deleted"}
 
 
 @lru_cache

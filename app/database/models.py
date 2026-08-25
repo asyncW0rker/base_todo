@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
-from app.database.schemas import UserRole, AnalyticsJobStatus, AttachmentContentType
+from app.database.schemas import UserRole, JobStatus, AttachmentContentType
 
 
 class User(Base):
@@ -72,12 +72,14 @@ class AnalyticsJob(Base):
     __tablename__ = "analytics_jobs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    status: Mapped[str] = mapped_column(Enum(AnalyticsJobStatus), default=AnalyticsJobStatus.PENDING)
+    status: Mapped[str] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
     params: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     result: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
     started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=False)
 
 
 class Attachment(Base):
@@ -93,3 +95,14 @@ class Attachment(Base):
 
     todo_id: Mapped[int] = mapped_column(ForeignKey(ToDo.id, ondelete="CASCADE"), nullable=False)
     todo: Mapped[ToDo] = relationship(back_populates="attachments", lazy="noload")
+
+
+# class ImportJob(Base):
+#     __tablename__ = "import_jobs"
+#
+#     id: Mapped[int] = mapped_column(primary_key=True)
+#     status: Mapped[str] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
+#     result: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+#     created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
+#     started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+#     finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)

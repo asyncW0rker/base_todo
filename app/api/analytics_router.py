@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, BackgroundTasks, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,9 +6,10 @@ from starlette.responses import JSONResponse
 
 from app.database.db import get_session
 from app.database.schemas import ToDoAnalyticsFilterParams, AnalyticsJobAccepted, AnalyticsJobOutput, \
-    AnalyticsJobStatus, HTTPErrorDetail
+    JobStatus, HTTPErrorDetail
 from app.services.analytics_service import AnalyticsService, get_analytics_service
-from app.utils.dependencies import manager_role_required
+from app.utils.dependencies import auth_required
+from app.utils.utils import get_current_user_payload
 
 
 router = APIRouter(prefix="/todos/analytics", tags=["analytics"])
@@ -23,16 +24,20 @@ router = APIRouter(prefix="/todos/analytics", tags=["analytics"])
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
     },
-    dependencies=[manager_role_required],
+    dependencies=[auth_required],
 )
 async def compute_todos_analytics(
     filter_params: ToDoAnalyticsFilterParams,
     background_tasks: BackgroundTasks,
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
     return await analytics_service.start_compute_analytics(
-        session=session, filter_params=filter_params, background_tasks=background_tasks
+        session=session,
+        filter_params=filter_params,
+        background_tasks=background_tasks,
+        current_user_info=current_user_info,
     )
 
 
@@ -53,7 +58,7 @@ async def get_todos_analytics(
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
     analytics_job = await analytics_service.get_analytics_job(session, job_id)
-    if analytics_job.status != AnalyticsJobStatus.DONE:
+    if analytics_job.status != JobStatus.DONE:
         return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
             content={
@@ -80,3 +85,11 @@ async def get_todos_analytics_by_params(
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
     return await analytics_service.get_analytics_job_by_params(session, filter_params)
+
+
+@router.delete("/")
+async def delete_all_analytics_jobs(
+    session: AsyncSession = Depends(get_session),
+    analytics_service: AnalyticsService = Depends(get_analytics_service),
+):
+    return await analytics_service.delete_all_analytics_jobs(session)

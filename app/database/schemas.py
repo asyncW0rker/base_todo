@@ -16,7 +16,7 @@ possible_content_types = ["image/jpeg", "image/png", "application/pdf"]
 UserRole = generate_enum_from_fields("UserRole", possible_roles)
 AnalyticsTimezone = generate_enum_from_fields("AnalyticsTimezone", pytz.all_timezones)
 QueryLanguage = generate_enum_from_fields("QueryLanguage", possible_query_languages)
-AnalyticsJobStatus = generate_enum_from_fields("AnalyticsJobStatus", possible_job_statuses)
+JobStatus = generate_enum_from_fields("JobStatus", possible_job_statuses)
 AttachmentContentType = generate_enum_from_fields("AttachmentContentType", possible_content_types)
 
 
@@ -199,7 +199,7 @@ class ToDoAnalyticsOutput(BaseModel):
 
 class AnalyticsJobOutput(BaseModel):
     id: int
-    status: AnalyticsJobStatus
+    status: JobStatus
     created_at: dt.datetime
     started_at: dt.datetime | None
     finished_at: dt.datetime | None
@@ -212,7 +212,7 @@ class AnalyticsJobOutput(BaseModel):
 
 class AnalyticsJobAccepted(BaseModel):
     job_id: int
-    status: AnalyticsJobStatus = AnalyticsJobStatus.PENDING
+    status: JobStatus = JobStatus.PENDING
 
 
 class UserBase(BaseModel):
