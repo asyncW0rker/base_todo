@@ -97,12 +97,14 @@ class Attachment(Base):
     todo: Mapped[ToDo] = relationship(back_populates="attachments", lazy="noload")
 
 
-# class ImportJob(Base):
-#     __tablename__ = "import_jobs"
-#
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     status: Mapped[str] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
-#     result: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
-#     created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
-#     started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
-#     finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+class ImportJob(Base):
+    __tablename__ = "import_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
+    filename: Mapped[str]
+    created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
+    started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=False)
