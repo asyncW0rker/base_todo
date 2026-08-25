@@ -65,3 +65,7 @@ class CSVFileHandler(BaseFileHandler):
     @staticmethod
     def get_format_name() -> str:
         return "csv"
+
+    @staticmethod
+    def get_content_type() -> str:
+        return "text/csv"
