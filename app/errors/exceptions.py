@@ -27,6 +27,10 @@ class FileNotFoundException(ValueError):
     pass
 
 
+class FileFormatException(ValueError):
+    pass
+
+
 HTTPBadRequest = partial(HTTPException, status_code=status.HTTP_400_BAD_REQUEST)
 HTTPInvalidTimezoneException = HTTPBadRequest(detail="Invalid timezone")
 HTTPValueError = HTTPBadRequest(detail="Invalid value")
