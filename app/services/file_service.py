@@ -5,9 +5,13 @@ from typing import Any
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.errors.exceptions import FileFormatException
-from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException
+from app.database.models import ImportJob
+from app.database.schemas import JobStatus
+from app.errors.exceptions import FileFormatException, FileNotFoundException
+from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException, \
+    HTTPImportJobNotFoundException
 from app.repos.import_job_repo import ImportJobRepository
+from app.repos.todo_repo import ToDoRepository
 from app.utils.parsers.file_manager import FileManager
 
 
@@ -15,6 +19,19 @@ from app.utils.parsers.file_manager import FileManager
 class FileService:
     file_manager: FileManager = FileManager()
     import_repo: ImportJobRepository = ImportJobRepository()
+    todo_repo: ToDoRepository = ToDoRepository()
+
+    async def get_import_job(self, session: AsyncSession, job_id: int) -> ImportJob:
+        import_job = await self.import_repo.get_one(session, job_id)
+        if import_job is None:
+            raise HTTPImportJobNotFoundException
+        return import_job
+
+    async def update_import_job(self, session: AsyncSession, job_id: int, update_data: dict[str, Any]) -> ImportJob:
+        job = await self.import_repo.update_one(session, job_id, dict(), update_data)
+        if job is None:
+            raise HTTPImportJobNotFoundException
+        return job
 
     async def import_todos_from_file(
         self,
@@ -44,7 +61,6 @@ class FileService:
             job_id=job.id,
             filename=file.filename,
             file_content=file_content,
-            user_id=job.user_id,
         ))
 
         return {"job_id": job.id}
@@ -55,7 +71,34 @@ class FileService:
         job_id: int,
         filename: str,
         file_content: bytes,
-        user_id: int,
     ):
-        pass
+        await self.update_import_job(session, job_id, {"status": JobStatus.RUNNING})
+
+        try:
+            parsed_rows = self.file_manager.parse_file(filename, file_content)
+            errors = []
+            created_count = 0
+
+            for parsed_row in parsed_rows:
+                if parsed_row.is_valid:
+                    created_count += 1
+                    await self.todo_repo.create_one_uncommited(session, parsed_row.data)
+                else:
+                    errors.append({
+                        "row_number": parsed_row.row_number,
+                        "error": parsed_row.error,
+                        "data": parsed_row.data,
+                     })
+
+            await self.update_import_job(session, job_id, {
+                "status": JobStatus.DONE,
+                "created_count": created_count,
+                "errors": errors,
+            })
+
+        except Exception as e:
+            await self.update_import_job(session, job_id, {
+                "status": JobStatus.FAILED,
+                "errors": [{"error": f"Critical: {str(e)}"}],
+            })
 
