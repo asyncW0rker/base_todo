@@ -1,5 +1,6 @@
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Any
 
 from fastapi import UploadFile
@@ -17,7 +18,7 @@ from app.utils.parsers.file_manager import FileManager
 
 @dataclass
 class FileService:
-    file_manager: FileManager = FileManager()
+    file_manager: FileManager = field(default_factory=FileManager)
     import_repo: ImportJobRepository = ImportJobRepository()
     todo_repo: ToDoRepository = ToDoRepository()
 
@@ -35,8 +36,8 @@ class FileService:
 
     async def import_todos_from_file(
         self,
-        file: UploadFile,
         session: AsyncSession,
+        file: UploadFile,
         current_user_info: dict[str, Any],
     ):
         if not file.filename:
@@ -102,3 +103,7 @@ class FileService:
                 "errors": [{"error": f"Critical: {str(e)}"}],
             })
 
+
+@lru_cache
+def get_file_service() -> FileService:
+    return FileService()

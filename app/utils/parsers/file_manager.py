@@ -26,7 +26,7 @@ class FileManager:
         return handler
 
     def get_handler_by_extension(self, file_name: str) -> BaseFileHandler:
-        extension = file_name.split(".")[-1]
+        extension = f".{file_name.split(".")[-1]}"
 
         for handler in self._handlers:
             if extension in handler.get_extensions():
@@ -41,8 +41,3 @@ class FileManager:
     def export_data(self, file_format: str, data: list[dict]) -> tuple[bytes, str]:
         handler = self.get_handler_by_format(file_format)
         return handler.export_file(data), handler.get_content_type()
-
-
-@lru_cache
-def get_file_manager():
-    return FileManager()
