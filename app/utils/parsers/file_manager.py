@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 
 from app.database.schemas import ParsedRow
 from app.errors.exceptions import FileFormatException
@@ -37,6 +38,11 @@ class FileManager:
         handler = self.get_handler_by_extension(file_name)
         return handler.parse_file(file_content)
 
-    def export_file(self, file_format: str, data: list[dict]) -> bytes:
+    def export_data(self, file_format: str, data: list[dict]) -> tuple[bytes, str]:
         handler = self.get_handler_by_format(file_format)
-        return handler.export_file(data)
+        return handler.export_file(data), handler.get_content_type()
+
+
+@lru_cache
+def get_file_manager():
+    return FileManager()
