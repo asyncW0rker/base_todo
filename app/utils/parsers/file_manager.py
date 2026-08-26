@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from functools import lru_cache
 
 from app.database.schemas import ParsedRow
 from app.errors.exceptions import FileFormatException

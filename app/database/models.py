@@ -25,7 +25,7 @@ class ToDo(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str]
-    description: Mapped[str]
+    description: Mapped[str] = mapped_column(String, nullable=True)
     completed: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now)
     updated_at: Mapped[dt.datetime] = mapped_column(default=dt.datetime.now, onupdate=dt.datetime.now)

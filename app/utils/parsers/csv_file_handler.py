@@ -13,16 +13,34 @@ from app.utils.parsers.base_file_handler import BaseFileHandler
 class CSVFileHandler(BaseFileHandler):
     data_model: Any = ToDoCreate
 
+    @staticmethod
+    def _clean_row(row: dict[str, Any]) -> dict[str, Any]:
+        cleaned_row = {}
+        for key, val in row.items():
+            clean_key = str(key).strip()
+            clean_val = str(val).strip() if val is not None else ""
+            if clean_val == "":
+                clean_val = None
+
+            cleaned_row[clean_key] = clean_val
+
+        return cleaned_row
+
+
     def parse_file(self, file_content: bytes) -> list[ParsedRow]:
         result = []
 
         try:
-            text = file_content.decode("utf-8")
-            reader = csv.DictReader(io.StringIO(text))
+            text = file_content.decode("utf-8-sig")
+            reader = csv.DictReader(io.StringIO(text), delimiter=";")
 
             for row_num, row in enumerate(reader, start=1):
                 try:
-                    parsed_data = self.data_model(**row)
+                    print(row)
+                    row_data = self._clean_row(row)
+                    print(row_data)
+                    parsed_data = self.data_model(**row_data)
+                    print(parsed_data)
                     result.append(ParsedRow(
                         row_number=row_num,
                         data=parsed_data.model_dump(),

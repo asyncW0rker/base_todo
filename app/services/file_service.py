@@ -1,4 +1,5 @@
 import asyncio
+import datetime as dt
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
@@ -6,9 +7,10 @@ from typing import Any
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.db import session_maker
 from app.database.models import ImportJob
 from app.database.schemas import JobStatus
-from app.errors.exceptions import FileFormatException, FileNotFoundException
+from app.errors.exceptions import FileFormatException
 from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException, \
     HTTPImportJobNotFoundException
 from app.repos.import_job_repo import ImportJobRepository
@@ -58,7 +60,6 @@ class FileService:
         file_content = await file.read()
 
         asyncio.create_task(self._process_import_job(
-            session=session,
             job_id=job.id,
             filename=file.filename,
             file_content=file_content,
@@ -68,40 +69,47 @@ class FileService:
 
     async def _process_import_job(
         self,
-        session: AsyncSession,
         job_id: int,
         filename: str,
         file_content: bytes,
     ):
-        await self.update_import_job(session, job_id, {"status": JobStatus.RUNNING})
-
-        try:
-            parsed_rows = self.file_manager.parse_file(filename, file_content)
-            errors = []
-            created_count = 0
-
-            for parsed_row in parsed_rows:
-                if parsed_row.is_valid:
-                    created_count += 1
-                    await self.todo_repo.create_one_uncommited(session, parsed_row.data)
-                else:
-                    errors.append({
-                        "row_number": parsed_row.row_number,
-                        "error": parsed_row.error,
-                        "data": parsed_row.data,
-                     })
-
+        async with session_maker() as session:
             await self.update_import_job(session, job_id, {
-                "status": JobStatus.DONE,
-                "created_count": created_count,
-                "errors": errors,
+                "status": JobStatus.RUNNING,
+                "started_at": dt.datetime.now(dt.UTC)
             })
 
-        except Exception as e:
-            await self.update_import_job(session, job_id, {
-                "status": JobStatus.FAILED,
-                "errors": [{"error": f"Critical: {str(e)}"}],
-            })
+            try:
+                parsed_rows = self.file_manager.parse_file(filename, file_content)
+                errors = []
+                created_count = 0
+
+                for parsed_row in parsed_rows:
+                    if parsed_row.is_valid:
+                        created_count += 1
+                        parsed_row.data.pop("attachments_meta")
+                        await self.todo_repo.create_one_uncommited(session, parsed_row.data)
+                    else:
+                        errors.append({
+                            "row_number": parsed_row.row_number,
+                            "error": parsed_row.error,
+                            "data": parsed_row.data,
+                         })
+
+                await self.update_import_job(session, job_id, {
+                    "status": JobStatus.DONE,
+                    "created_count": created_count,
+                    "errors": errors,
+                    "finished_at": dt.datetime.now(dt.UTC),
+                })
+
+            except Exception as e:
+                await session.rollback()
+                await self.update_import_job(session, job_id, {
+                    "status": JobStatus.FAILED,
+                    "errors": [{"error": f"Critical: {str(e)}"}],
+                    "finished_at": dt.datetime.now(dt.UTC),
+                })
 
 
 @lru_cache

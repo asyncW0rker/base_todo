@@ -74,7 +74,7 @@ class AttachmentDownloadURL(BaseModel):
 
 class ToDoBase(BaseModel):
     title: str
-    description: str
+    description: str | None = None
     user_id: int | None = None
 
 
@@ -126,7 +126,7 @@ class ToDoStatusUpdate(BaseModel):
 class ToDoOutput(BaseModel):
     id: int
     title: str
-    description: str
+    description: str | None
     completed: bool
     completed_at: dt.datetime | None
     created_at: dt.datetime
