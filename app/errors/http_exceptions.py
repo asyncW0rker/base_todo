@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 HTTPBadRequest = partial(HTTPException, status_code=status.HTTP_400_BAD_REQUEST)
 HTTPInvalidTimezoneException = HTTPBadRequest(detail="Invalid timezone")
 HTTPValueError = HTTPBadRequest(detail="Invalid value")
+HTTPNoFileProvidedException = HTTPBadRequest(detail="No file provided")
 
 
 HTTPNotAuthException = partial(HTTPException, status_code=status.HTTP_401_UNAUTHORIZED)
@@ -39,3 +40,4 @@ HTTPAttachmentTooLargeException = HTTPTooLargeException(detail="Payload too larg
 
 HTTPUnsupportedMedia = partial(HTTPException, status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 HTTPAttachmentUnsupportedMedia = HTTPUnsupportedMedia(detail="Unsupported file type")
+HTTPFileFormatException = HTTPUnsupportedMedia(detail="Unsupported file format")
