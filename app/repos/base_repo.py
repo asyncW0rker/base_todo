@@ -58,6 +58,11 @@ class BaseRepository:
         result = await session.execute(select(self.model))
         return result.scalars().all()
 
+    async def filter_ids_by_existence(self, session: AsyncSession, potential_ids: list[int]) -> Sequence[int]:
+        query = select(self.model.id).where(self.model.id.in_(potential_ids))
+        result = await session.execute(query)
+        return result.scalars().all()
+
     async def update_one(
         self, session: AsyncSession, item_id: int, filter_params: dict[str, Any], update_data: dict[str, Any]
     ) -> Any:
@@ -102,4 +107,3 @@ class BaseRepository:
     async def delete_all(self, session: AsyncSession) -> None:
         await session.execute(delete(self.model))
         await session.commit()
-

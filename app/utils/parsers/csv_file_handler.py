@@ -36,11 +36,8 @@ class CSVFileHandler(BaseFileHandler):
 
             for row_num, row in enumerate(reader, start=1):
                 try:
-                    print(row)
                     row_data = self._clean_row(row)
-                    print(row_data)
                     parsed_data = self.data_model(**row_data)
-                    print(parsed_data)
                     result.append(ParsedRow(
                         row_number=row_num,
                         data=parsed_data.model_dump(),

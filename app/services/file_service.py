@@ -9,12 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import session_maker
 from app.database.models import ImportJob
-from app.database.schemas import JobStatus
+from app.database.schemas import JobStatus, ParsedRow
 from app.errors.exceptions import FileFormatException
 from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException, \
     HTTPImportJobNotFoundException
 from app.repos.import_job_repo import ImportJobRepository
 from app.repos.todo_repo import ToDoRepository
+from app.repos.user_repo import UserRepository
 from app.utils.parsers.file_manager import FileManager
 
 
@@ -23,6 +24,7 @@ class FileService:
     file_manager: FileManager = field(default_factory=FileManager)
     import_repo: ImportJobRepository = ImportJobRepository()
     todo_repo: ToDoRepository = ToDoRepository()
+    user_repo: UserRepository = UserRepository()
 
     async def get_import_job(self, session: AsyncSession, job_id: int) -> ImportJob:
         import_job = await self.import_repo.get_one(session, job_id)
@@ -67,6 +69,17 @@ class FileService:
 
         return {"job_id": job.id}
 
+    @staticmethod
+    def _process_rows_by_user_existence(parsed_rows: list[ParsedRow], existing_ids: set[int]) -> list[ParsedRow]:
+        for row in parsed_rows:
+            cur_user_id = row.data["user_id"]
+
+            if cur_user_id and cur_user_id not in existing_ids:
+                row.is_valid = False
+                row.error = f"User {cur_user_id} not found"
+
+        return parsed_rows
+
     async def _process_import_job(
         self,
         job_id: int,
@@ -81,6 +94,10 @@ class FileService:
 
             try:
                 parsed_rows = self.file_manager.parse_file(filename, file_content)
+                user_ids = [row.data["user_id"] for row in parsed_rows if row.data["user_id"] is not None]
+                existing_ids = await self.user_repo.filter_ids_by_existence(session, user_ids)
+                parsed_rows = self._process_rows_by_user_existence(parsed_rows, existing_ids)
+
                 errors = []
                 created_count = 0
 
