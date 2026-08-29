@@ -43,11 +43,6 @@ services:
     build: .
     env_file:
       - .env.worker
-    environment:
-      - DB_HOST=pg
-      - REDIS_HOST=redis
-      - S3_HOST=minio
-
     depends_on:
       pg:
         condition: service_healthy
@@ -55,7 +50,7 @@ services:
         condition: service_healthy
     volumes:
       - ./app:/app/app
-    command: taskiq worker
+    command: uv run taskiq worker app.utils.background.broker:broker
 
 
 volumes:
