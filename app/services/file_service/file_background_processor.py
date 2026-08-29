@@ -48,6 +48,11 @@ class FileBackgroundProcessor(FileServiceBase):
                     "errors": errors,
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
+                return {
+                    "status": JobStatus.DONE,
+                    "created_count": created_count,
+                    "errors_count": len(errors),
+                }
 
             except Exception as e:
                 await session.rollback()
@@ -56,6 +61,10 @@ class FileBackgroundProcessor(FileServiceBase):
                     "errors": [{"error": f"Critical: {str(e)}"}],
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
+                return {
+                    "status": JobStatus.FAILED,
+                    "error": f"Critical: {str(e)}",
+                }
 
 
 @lru_cache
