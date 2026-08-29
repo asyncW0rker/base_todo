@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.errors.exceptions import FileFormatException
 from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException
 from app.services.file_service.file_service_base import FileServiceBase
+from app.utils.background.tasks import process_import_job
 
 
 @dataclass
@@ -36,11 +37,11 @@ class FileService(FileServiceBase):
         )
         file_content = await file.read()
 
-        asyncio.create_task(self._process_import_job(
+        await process_import_job.kiq(
             job_id=job.id,
             filename=file.filename,
             file_content=file_content,
-        ))
+        )
 
         return {"job_id": job.id}
 

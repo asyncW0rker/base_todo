@@ -48,7 +48,7 @@ class RedisSettings(BaseSettings):
     REDIS_PORT: str
 
     @property
-    def get_redis_url(self) -> str:
+    def redis_url(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
 

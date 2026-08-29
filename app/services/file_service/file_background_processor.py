@@ -1,5 +1,6 @@
 import datetime as dt
 from dataclasses import dataclass
+from functools import lru_cache
 
 from app.database.db import session_maker
 from app.database.schemas import JobStatus
@@ -55,3 +56,8 @@ class FileBackgroundProcessor(FileServiceBase):
                     "errors": [{"error": f"Critical: {str(e)}"}],
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
+
+
+@lru_cache
+def get_file_processor():
+    return FileBackgroundProcessor()
