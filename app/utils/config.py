@@ -41,10 +41,22 @@ class S3Settings(BaseSettings):
         return f"http://{self.S3_HOST}:{self.S3_API_PORT}"
 
 
+class RedisSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=find_dotenv(), extra="ignore")
+
+    REDIS_HOST: str
+    REDIS_PORT: str
+
+    @property
+    def get_redis_url(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+
+
 class Settings(BaseSettings):
     database: DatabaseSettings = DatabaseSettings()
     security: SecuritySettings = SecuritySettings()
     s3: S3Settings = S3Settings()
+    redis: RedisSettings = RedisSettings()
 
 
 settings = Settings()
