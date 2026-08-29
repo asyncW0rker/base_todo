@@ -4,12 +4,14 @@ from app.database.schemas import ParsedRow
 from app.errors.exceptions import FileFormatException
 from app.utils.parsers.base_file_handler import BaseFileHandler
 from app.utils.parsers.csv_file_handler import CSVFileHandler
+from app.utils.parsers.ndjson_file_handler import NDJSONFileHandler
 
 
 @dataclass
 class FileManager:
     _handlers: list[BaseFileHandler] = (
         CSVFileHandler(),
+        NDJSONFileHandler(),
     )
 
     def __post_init__(self):
