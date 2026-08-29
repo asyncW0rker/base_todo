@@ -1,6 +1,7 @@
 .venv/
 venv/
-env
+.env
+.env.worker
 __pycache__
 *.pyc
 .idea/
