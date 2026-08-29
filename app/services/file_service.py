@@ -72,7 +72,7 @@ class FileService:
     @staticmethod
     def _process_rows_by_user_existence(parsed_rows: list[ParsedRow], existing_ids: set[int]) -> list[ParsedRow]:
         for row in parsed_rows:
-            cur_user_id = row.data["user_id"]
+            cur_user_id = row.data.get("user_id")
 
             if cur_user_id and cur_user_id not in existing_ids:
                 row.is_valid = False
@@ -94,7 +94,7 @@ class FileService:
 
             try:
                 parsed_rows = self.file_manager.parse_file(filename, file_content)
-                user_ids = [row.data["user_id"] for row in parsed_rows if row.data["user_id"] is not None]
+                user_ids = [row.data["user_id"] for row in parsed_rows if row.data.get("user_id") is not None]
                 existing_ids = await self.user_repo.filter_ids_by_existence(session, user_ids)
                 parsed_rows = self._process_rows_by_user_existence(parsed_rows, existing_ids)
 
