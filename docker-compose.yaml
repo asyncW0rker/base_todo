@@ -22,7 +22,15 @@ services:
     command: server /data --console-address ":${S3_GUI_PORT}"
     volumes:
       - minio_data:/data
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
 
 volumes:
   todo_data:
   minio_data:
+  redis_data:
