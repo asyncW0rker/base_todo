@@ -14,7 +14,7 @@ class FileBackgroundProcessor(FileServiceBase):
         job_id: int,
         filename: str,
         file_content: bytes,
-    ):
+    ) -> None:
         async with session_maker() as session:
             await self.update_import_job(session, job_id, {
                 "status": JobStatus.RUNNING,
@@ -48,11 +48,6 @@ class FileBackgroundProcessor(FileServiceBase):
                     "errors": errors,
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
-                return {
-                    "status": JobStatus.DONE,
-                    "created_count": created_count,
-                    "errors_count": len(errors),
-                }
 
             except Exception as e:
                 await session.rollback()
@@ -61,10 +56,6 @@ class FileBackgroundProcessor(FileServiceBase):
                     "errors": [{"error": f"Critical: {str(e)}"}],
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
-                return {
-                    "status": JobStatus.FAILED,
-                    "error": f"Critical: {str(e)}",
-                }
 
 
 @lru_cache
