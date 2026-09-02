@@ -71,7 +71,10 @@ class NDJSONFileHandler(BaseFileHandler):
         if not data:
             return b""
 
-        lines = [json.dumps(row, ensure_ascii=False) for row in data]
+        lines = [
+            json.dumps(row, ensure_ascii=False, default=str)
+            for row in data
+        ]
         return "\n".join(lines).encode("utf-8")
 
     @staticmethod

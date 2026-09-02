@@ -6,6 +6,7 @@ from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
+from app.database.schemas import ToDoOutput
 from app.errors.exceptions import FileFormatException
 from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException
 from app.services.file_service.file_service_base import FileServiceBase
@@ -66,9 +67,14 @@ class FileService(FileServiceBase):
             }
         )
 
+        export_data = [
+            ToDoOutput.model_validate(todo).model_dump(mode="json")
+            for todo in todos
+        ]
+
         await process_export_job.kiq(
             job_id=job.id,
-            data=todos
+            data=export_data,
         )
 
         return {"job_id": job.id}

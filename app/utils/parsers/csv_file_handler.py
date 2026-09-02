@@ -67,11 +67,11 @@ class CSVFileHandler(BaseFileHandler):
         output = io.StringIO()
         field_names = list(data[0].keys())
 
-        writer = csv.DictWriter(output, fieldnames=field_names)
+        writer = csv.DictWriter(output, fieldnames=field_names, delimiter=";")
         writer.writeheader()
         writer.writerows(data)
 
-        return output.getvalue().encode("utf-8")
+        return output.getvalue().encode("utf-8-sig")
 
     @staticmethod
     def get_extensions() -> list[str]:

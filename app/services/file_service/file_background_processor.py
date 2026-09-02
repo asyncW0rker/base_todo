@@ -1,9 +1,6 @@
-import asyncio
 import datetime as dt
 from dataclasses import dataclass
 from functools import lru_cache
-from os import times
-from typing import Sequence, Any
 
 from app.database.db import session_maker
 from app.database.schemas import JobStatus, ToDoOutput
@@ -60,17 +57,14 @@ class FileBackgroundProcessor(FileServiceBase):
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
 
-    async def process_export_job(self, job_id: int, data: Sequence[Any]) -> None:
+    async def process_export_job(self, job_id: int, data: list[dict]) -> None:
         async with session_maker() as session:
             try:
-                await asyncio.sleep(10)
-
                 job = await self.update_export_job(session, job_id, {
                     "status": JobStatus.RUNNING,
                     "started_at": dt.datetime.now(dt.UTC)
                 })
-                export_data = [ToDoOutput.model_validate(todo).model_dump() for todo in data]
-                file_bytes, content_type = self.file_manager.export_data(job.format, export_data)
+                file_bytes, content_type = self.file_manager.export_data(job.format, data)
 
                 timestamp = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d %H:%M:%S")
                 filename = f"export_{job.id}_{timestamp}.{job.format}"
@@ -78,15 +72,12 @@ class FileBackgroundProcessor(FileServiceBase):
 
                 await self.s3_manager.upload_bytes(storage_key, file_bytes, content_type)
 
-                await asyncio.sleep(10)
-
                 await self.update_export_job(session, job_id, {
                     "status": JobStatus.DONE,
                     "finished_at": dt.datetime.now(dt.UTC),
                     "filename": filename,
                     "file_path": storage_key,
                 })
-
 
             except Exception as e:
                 await session.rollback()
