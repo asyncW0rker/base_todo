@@ -1,9 +1,12 @@
+import asyncio
 import datetime as dt
 from dataclasses import dataclass
 from functools import lru_cache
+from os import times
+from typing import Sequence, Any
 
 from app.database.db import session_maker
-from app.database.schemas import JobStatus
+from app.database.schemas import JobStatus, ToDoOutput
 from app.services.file_service.file_service_base import FileServiceBase
 
 
@@ -54,6 +57,42 @@ class FileBackgroundProcessor(FileServiceBase):
                 await self.update_import_job(session, job_id, {
                     "status": JobStatus.FAILED,
                     "errors": [{"error": f"Critical: {str(e)}"}],
+                    "finished_at": dt.datetime.now(dt.UTC),
+                })
+
+    async def process_export_job(self, job_id: int, data: Sequence[Any]) -> None:
+        async with session_maker() as session:
+            try:
+                await asyncio.sleep(10)
+
+                job = await self.update_export_job(session, job_id, {
+                    "status": JobStatus.RUNNING,
+                    "started_at": dt.datetime.now(dt.UTC)
+                })
+                export_data = [ToDoOutput.model_validate(todo).model_dump() for todo in data]
+                file_bytes, content_type = self.file_manager.export_data(job.format, export_data)
+
+                timestamp = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d %H:%M:%S")
+                filename = f"export_{job.id}_{timestamp}.{job.format}"
+                storage_key = self.s3_manager.generate_file_key_for_exports(job.user_id, filename)
+
+                await self.s3_manager.upload_bytes(storage_key, file_bytes, content_type)
+
+                await asyncio.sleep(10)
+
+                await self.update_export_job(session, job_id, {
+                    "status": JobStatus.DONE,
+                    "finished_at": dt.datetime.now(dt.UTC),
+                    "filename": filename,
+                    "file_path": storage_key,
+                })
+
+
+            except Exception as e:
+                await session.rollback()
+                await self.update_export_job(session, job_id, {
+                    "status": JobStatus.FAILED,
+                    "error": f"Critical: {str(e)}",
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
 

@@ -45,7 +45,7 @@ class ToDoService:
         todo = await self.todo_repo.create_one_uncommited(session, creation_params)
 
         for attachment in attachments_meta:
-            storage_key = self.s3_manager.generate_file_key(todo.id, attachment["filename"])
+            storage_key = self.s3_manager.generate_file_key_for_attachments(todo.id, attachment["filename"])
             upload_url = await self.s3_manager.generate_presigned_upload_url(storage_key, attachment["content_type"])
             upload_urls.append({
                 "storage_key": storage_key,

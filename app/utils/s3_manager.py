@@ -24,9 +24,13 @@ class S3Manager:
         }
 
     @staticmethod
-    def generate_file_key(todo_id: int, filename: str) -> str:
+    def generate_file_key_for_attachments(todo_id: int, filename: str) -> str:
         extension = filename.split(".")[-1] if "." in filename else "bin"
         return f"todos/{todo_id}/attachments/{uuid4()}.{extension}"
+
+    @staticmethod
+    def generate_file_key_for_exports(user_id: int, filename: str) -> str:
+        return f"exports/{user_id}/{filename}"
 
     async def generate_presigned_upload_url(self, file_key: str, content_type: str, expires_in: int = 300) -> str:
         async with self._session.create_client(**self._get_client_params()) as client:
@@ -50,6 +54,20 @@ class S3Manager:
                     "Key": file_key
                 },
                 ExpiresIn=expires_in
+            )
+
+    async def upload_bytes(
+        self,
+        file_key: str,
+        data: bytes,
+        content_type: str,
+    ) -> None:
+        async with self._session.create_client(**self._get_client_params()) as client:
+            await client.put_object(
+                Bucket=settings.s3.S3_BUCKET,
+                Key=file_key,
+                Body=data,
+                ContentType=content_type,
             )
 
     async def verify_file_size(self, file_key: str, max_size: int):

@@ -49,7 +49,7 @@ class AttachmentService:
 
         self._check_user_permission(todo.user_id, current_user_info)
 
-        storage_key = self.s3_manager.generate_file_key(todo_id, file_info.filename)
+        storage_key = self.s3_manager.generate_file_key_for_attachments(todo_id, file_info.filename)
 
         attachment_data = {
             **file_info.model_dump(),

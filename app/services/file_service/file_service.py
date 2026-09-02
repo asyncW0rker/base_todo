@@ -62,6 +62,7 @@ class FileService(FileServiceBase):
             creation_data={
                 "format": file_format,
                 "user_id": int(current_user_info["sub"]),
+                "records_count": len(todos),
             }
         )
 

@@ -118,6 +118,7 @@ class ExportJob(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     status: Mapped[str] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
     filename: Mapped[str] = mapped_column(String(255), nullable=True)
+    format: Mapped[str] = mapped_column(nullable=True)
     file_path: Mapped[str] = mapped_column(String(500), nullable=True)
     records_count: Mapped[int] = mapped_column(nullable=True)
     error: Mapped[str] = mapped_column(Text, nullable=True)
