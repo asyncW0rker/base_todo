@@ -9,7 +9,7 @@ from app.database.models import ToDo
 from app.errors.exceptions import FileFormatException
 from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException
 from app.services.file_service.file_service_base import FileServiceBase
-from app.utils.background.tasks import process_import_job
+from app.utils.background.tasks import process_import_job, process_export_job
 
 
 @dataclass
