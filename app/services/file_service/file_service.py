@@ -6,9 +6,10 @@ from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
-from app.database.schemas import ToDoOutput
+from app.database.schemas import ToDoOutput, JobStatus
 from app.errors.exceptions import FileFormatException
-from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException
+from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException, \
+    HTTPExportedFileNotFoundException
 from app.services.file_service.file_service_base import FileServiceBase
 from app.utils.background.tasks import process_import_job, process_export_job
 
@@ -78,6 +79,16 @@ class FileService(FileServiceBase):
         )
 
         return {"job_id": job.id}
+
+    async def download_exported_data(self, session: AsyncSession, job_id: int):
+        job = await self.get_export_job(session, job_id)
+        if job.status != JobStatus.DONE:
+            raise HTTPExportedFileNotFoundException
+        download_url = await self.s3_manager.generate_presigned_download_url(job.file_path)
+        return {
+            "storage_key": job.file_path,
+            "download_url": download_url,
+        }
 
 
 @lru_cache

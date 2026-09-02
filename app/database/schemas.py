@@ -42,6 +42,23 @@ class BaseSearchParams(BaseModel):
     language: QueryLanguage = QueryLanguage.RUSSIAN
 
 
+class BaseDownloadURL(BaseModel):
+    storage_key: str
+    download_url: str
+
+
+class BaseJobOutput(BaseModel):
+    id: int
+    user_id: int | None = None
+    status: JobStatus
+    created_at: dt.datetime
+    started_at: dt.datetime | None
+    finished_at: dt.datetime | None
+
+    class Config:
+        from_attributes = True
+
+
 class AttachmentUploadRequest(BaseModel):
     filename: str
     size: int
@@ -67,9 +84,8 @@ class AttachmentUploadURL(BaseModel):
     upload_url: str
 
 
-class AttachmentDownloadURL(BaseModel):
-    storage_key: str
-    download_url: str
+class AttachmentDownloadURL(BaseDownloadURL):
+    pass
 
 
 class ToDoBase(BaseModel):
@@ -198,22 +214,43 @@ class ToDoAnalyticsOutput(BaseModel):
         from_attributes = True
 
 
-class AnalyticsJobOutput(BaseModel):
-    id: int
-    status: JobStatus
-    created_at: dt.datetime
-    started_at: dt.datetime | None
-    finished_at: dt.datetime | None
+class AnalyticsJobOutput(BaseJobOutput):
     params: dict[str, Any]
     result: ToDoAnalyticsOutput | dict
 
-    class Config:
-        from_attributes = True
 
-
-class AnalyticsJobAccepted(BaseModel):
+class JobAccepted(BaseModel):
     job_id: int
     status: JobStatus = JobStatus.PENDING
+
+
+class ParsedRow(BaseModel):
+    row_number: int
+    data: dict[str, Any]
+    is_valid: bool = True
+    error: str | None = None
+
+
+class ImportJobOutput(BaseJobOutput):
+    filename: str | None
+    created_count: int  | None
+    errors: list[dict]
+
+
+class ExportJobOutput(BaseJobOutput):
+    filename: str | None
+    format: str | None
+    file_path: str | None
+    records_count: int | None
+    error: str | None
+
+
+class ExportDownloadUrl(BaseDownloadURL):
+    pass
+
+
+class ToDoExportOrderingParams(BaseOrderingParams):
+    pass
 
 
 class UserBase(BaseModel):
@@ -254,14 +291,3 @@ class RefreshToken(BaseModel):
 class AuthOutput(BaseModel):
     access_token: str
     refresh_token: str
-
-
-class ParsedRow(BaseModel):
-    row_number: int
-    data: dict[str, Any]
-    is_valid: bool = True
-    error: str | None = None
-
-
-class ToDoExportOrderingParams(BaseOrderingParams):
-    pass

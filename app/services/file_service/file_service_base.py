@@ -40,7 +40,7 @@ class FileServiceBase:
             raise HTTPImportJobNotFoundException
         return import_job
 
-    async def get_export_job(self, session: AsyncSession, job_id: int) -> ImportJob:
+    async def get_export_job(self, session: AsyncSession, job_id: int) -> ExportJob:
         export_job = await self.export_repo.get_one(session, job_id)
         if export_job is None:
             raise HTTPExportJobNotFoundException
