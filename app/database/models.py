@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import Any
 
-from sqlalchemy import ForeignKey, Enum, Computed, Index, func, text, String
+from sqlalchemy import ForeignKey, Enum, Computed, Index, func, text, String, Text
 from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -105,6 +105,22 @@ class ImportJob(Base):
     filename: Mapped[str]
     created_count: Mapped[int] = mapped_column(default=0)
     errors: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
+    started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=False)
+
+
+class ExportJob(Base):
+    __tablename__ = "export_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
+    filename: Mapped[str] = mapped_column(String(255), nullable=True)
+    file_path: Mapped[str] = mapped_column(String(500), nullable=True)
+    records_count: Mapped[int] = mapped_column(nullable=True)
+    error: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)
     started_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
