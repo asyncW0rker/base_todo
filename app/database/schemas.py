@@ -29,7 +29,7 @@ class Message(BaseModel):
 
 
 class BaseOrderingParams(BaseModel):
-    limit: int = Field(10, gt=0, le=100)
+    limit: int = Field(10, gt=0, le=10000)
     offset: int = Field(0, ge=0)
 
 
@@ -147,6 +147,7 @@ ToDoSortingFields = generate_ordering_enum("ToDoSortingFields", ToDoOutput, ["cr
 
 
 class ToDoOrderingParams(BaseOrderingParams):
+    limit: int = Field(10, gt=0, le=100)
     sort_by: ToDoSortingFields = ToDoSortingFields.CREATED_AT
 
 
@@ -260,3 +261,7 @@ class ParsedRow(BaseModel):
     data: dict[str, Any]
     is_valid: bool = True
     error: str | None = None
+
+
+class ToDoExportOrderingParams(BaseOrderingParams):
+    pass

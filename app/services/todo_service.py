@@ -5,8 +5,8 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
-from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, ToDoOrderingParams, \
-    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams, ToDoWithUploads
+from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, \
+    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams, ToDoWithUploads, BaseOrderingParams
 from app.errors.http_exceptions import HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPToDoVersionMismatchException
 from app.repos.attachment_repo import AttachmentRepository
@@ -80,9 +80,9 @@ class ToDoService:
     async def get_many_todos(
         self,
         session: AsyncSession,
-        ordering_params: ToDoOrderingParams,
+        ordering_params: BaseOrderingParams,
         filter_params: ToDoFilterParams,
-        search_params: ToDoSearchParams,
+        search_params: ToDoSearchParams | None,
         current_user_info: dict[str, Any],
     ):
         filter_params_dict = filter_params.model_dump()
@@ -92,7 +92,7 @@ class ToDoService:
             session=session,
             ordering_params=ordering_params.model_dump(),
             filter_params=filter_params_dict,
-            search_params=search_params.model_dump(),
+            search_params=search_params.model_dump() if search_params else {},
         )
 
     async def update_todo(

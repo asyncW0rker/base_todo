@@ -45,6 +45,9 @@ class FileService(FileServiceBase):
 
         return {"job_id": job.id}
 
+    async def export_todos_to_file(self, session, todos, file_format):
+        return {"todos": todos, "file_format": file_format}
+
 
 @lru_cache
 def get_file_service() -> FileService:
