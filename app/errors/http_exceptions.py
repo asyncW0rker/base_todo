@@ -27,6 +27,7 @@ HTTPTokenNotFoundException = HTTPNotFoundException(detail="Token not found")
 HTTPAnalyticsJobNotFoundException = HTTPNotFoundException(detail="Analytics job not found")
 HTTPAttachmentNotFoundException = HTTPNotFoundException(detail="Attachment not found")
 HTTPImportJobNotFoundException = HTTPNotFoundException(detail="Import job not found")
+HTTPExportJobNotFoundException = HTTPNotFoundException(detail="Export job not found")
 
 
 HTTPConflictException = partial(HTTPException, status_code=status.HTTP_409_CONFLICT)
