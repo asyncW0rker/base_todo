@@ -11,11 +11,13 @@ from app.repos.import_job_repo import ImportJobRepository
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
 from app.utils.parsers.file_manager import FileManager
+from app.utils.s3_manager import S3Manager
 
 
 @dataclass
 class FileServiceBase:
     file_manager: FileManager = field(default_factory=FileManager)
+    s3_manager: S3Manager = field(default_factory=S3Manager)
     import_repo: ImportJobRepository = ImportJobRepository()
     export_repo: ExportJobRepository = ExportJobRepository()
     todo_repo: ToDoRepository = ToDoRepository()

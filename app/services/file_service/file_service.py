@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any
+from typing import Any, Sequence
 
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.models import ToDo
 from app.errors.exceptions import FileFormatException
 from app.errors.http_exceptions import HTTPNoFileProvidedException, HTTPFileFormatException
 from app.services.file_service.file_service_base import FileServiceBase
@@ -44,8 +45,32 @@ class FileService(FileServiceBase):
 
         return {"job_id": job.id}
 
-    async def export_todos_to_file(self, session, todos, file_format):
-        return {"todos": todos, "file_format": file_format}
+    async def export_todos_to_file(
+        self,
+        session: AsyncSession,
+        todos: Sequence[ToDo],
+        file_format: str,
+        current_user_info: dict[str, Any],
+    ):
+        try:
+            self.file_manager.get_handler_by_format(file_format)
+        except FileFormatException:
+            raise HTTPFileFormatException
+
+        job = await self.export_repo.create_one(
+            session=session,
+            creation_data={
+                "format": file_format,
+                "user_id": int(current_user_info["sub"]),
+            }
+        )
+
+        await process_export_job.kiq(
+            job_id=job.id,
+            data=todos
+        )
+
+        return {"job_id": job.id}
 
 
 @lru_cache
