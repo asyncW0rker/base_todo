@@ -34,14 +34,29 @@ def private_user_permission_required(
 
 
 def ownership_and_role_access_to_object(minimum_role: UserRole = UserRole.ADMIN):
-    def wrapper(get_action: Awaitable | callable):
-        @functools.wraps(get_action)
+    def wrapper(service_action: Awaitable | callable):
+        @functools.wraps(service_action)
         async def inner(*args, current_user_info, **kwargs):
-            data = await get_action(*args, **kwargs, current_user_info=current_user_info)
+            data = await service_action(*args, **kwargs, current_user_info=current_user_info)
             user_id, user_role = int(current_user_info.get("sub")), current_user_info.get("role")
             if data.user_id != user_id and user_role not in [UserRole.ADMIN, minimum_role]:
                 raise HTTPPrivatePermissionDeniedException
             return data
         return inner
 
+    return wrapper
+
+
+def filter_data_by_user_id_and_role(minimum_role: UserRole = UserRole.ADMIN):
+    def wrapper(service_action: Awaitable | callable):
+        @functools.wraps(service_action)
+        async def inner(*args, current_user_info, **kwargs):
+            filter_params = kwargs["filter_params"].model_dump() if kwargs.get("filter_params") else {}
+            user_id, user_role = int(current_user_info.get("sub")), current_user_info.get("role")
+            available_roles = [UserRole.ADMIN, minimum_role]
+            user_params = {"user_id": int(user_id)} if user_role not in available_roles else {}
+            filter_params.update(user_params)
+            kwargs["filter_params"] = filter_params
+            return await service_action(*args, **kwargs, current_user_info=current_user_info)
+        return inner
     return wrapper

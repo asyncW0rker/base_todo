@@ -12,7 +12,7 @@ from app.errors.http_exceptions import HTTPUserNotFoundException, HTTPToDoNotFou
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
-from app.utils.rbac import ownership_and_role_access_to_object
+from app.utils.rbac import ownership_and_role_access_to_object, filter_data_by_user_id_and_role
 from app.utils.s3_manager import S3Manager, get_s3_manager
 
 
@@ -27,12 +27,6 @@ class ToDoService:
         user = await self.user_repo.get_one(session, user_id)
         if user is None:
             raise HTTPUserNotFoundException
-
-    @staticmethod
-    def _get_filter_params_from_user_data(user_data: dict[str, Any]) -> dict[str, Any]:
-        user_role, user_id = user_data.get("role"), user_data.get("sub")
-        filter_params = {"user_id": int(user_id)} if user_role == UserRole.USER else {}
-        return filter_params
 
     async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDoWithUploads:
         if creation_data.user_id is not None:
@@ -75,34 +69,35 @@ class ToDoService:
     async def get_all_todos(self, session: AsyncSession):
         return await self.todo_repo.get_all(session)
 
+    @filter_data_by_user_id_and_role(UserRole.MANAGER)
     async def get_many_todos(
         self,
         session: AsyncSession,
         ordering_params: BaseOrderingParams,
-        filter_params: ToDoFilterParams,
+        filter_params: ToDoFilterParams | dict,
         search_params: ToDoSearchParams | None,
         current_user_info: dict[str, Any],
     ):
-        filter_params_dict = filter_params.model_dump()
-        user_filter_params = self._get_filter_params_from_user_data(current_user_info)
-        filter_params_dict.update(user_filter_params)
         return await self.todo_repo.get_many(
             session=session,
             ordering_params=ordering_params.model_dump(),
-            filter_params=filter_params_dict,
+            filter_params=filter_params,
             search_params=search_params.model_dump() if search_params else {},
         )
 
+    @filter_data_by_user_id_and_role(UserRole.MANAGER)
     async def update_todo(
         self,
         session: AsyncSession,
-        todo_id: int, update_data: ToDoUpdate | ToDoPatch,
+        todo_id: int,
+        update_data: ToDoUpdate | ToDoPatch,
         current_user_info: dict[str, Any],
+        filter_params: Any | None = None,
     ):
         if update_data.user_id is not None:
             await self._check_user_existence(session, update_data.user_id)
 
-        filter_params = self._get_filter_params_from_user_data(current_user_info)
+        filter_params = filter_params or {}
         filter_params["version"] = update_data.version
         update_data.version += 1
 
@@ -111,17 +106,22 @@ class ToDoService:
         )
 
         if changed_todo is None:
-            todo = await self.get_todo(session, todo_id, current_user_info=current_user_info)
+            todo = await self.get_todo(session=session, todo_id=todo_id, current_user_info=current_user_info)
             raise HTTPToDoVersionMismatchException(detail=f"Actual version for ToDo is {todo.version}")
 
         return changed_todo
 
+    @filter_data_by_user_id_and_role(UserRole.MANAGER)
     async def update_status_for_todos(
-        self, session: AsyncSession, update_data: ToDoStatusUpdate, current_user_info: dict[str, Any],
+        self,
+        session: AsyncSession,
+        update_data: ToDoStatusUpdate,
+        current_user_info: dict[str, Any],
+        filter_params: Any | None = None,
     ):
+        filter_params = filter_params or {}
         update_data_dict = update_data.model_dump()
         todos_ids = update_data_dict.pop("ids")
-        filter_params = self._get_filter_params_from_user_data(current_user_info)
 
         changed_todos_count = await self.todo_repo.update_many(
             session=session, items_ids=todos_ids, filter_params=filter_params, update_data=update_data_dict
