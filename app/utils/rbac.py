@@ -1,4 +1,5 @@
-from typing import Any
+import functools
+from typing import Any, Awaitable
 
 from fastapi import Depends, Path
 
@@ -30,3 +31,17 @@ def private_user_permission_required(
     user_role = user_payload.get("role")
     if user_id != user_id_from_token and user_role != UserRole.ADMIN:
         raise HTTPPrivatePermissionDeniedException
+
+
+def ownership_and_role_access_to_object(minimum_role: UserRole = UserRole.ADMIN):
+    def wrapper(get_action: Awaitable | callable):
+        @functools.wraps(get_action)
+        async def inner(*args, current_user_info, **kwargs):
+            data = await get_action(*args, **kwargs, current_user_info=current_user_info)
+            user_id, user_role = int(current_user_info.get("sub")), current_user_info.get("role")
+            if data.user_id != user_id and user_role not in [UserRole.ADMIN, minimum_role]:
+                raise HTTPPrivatePermissionDeniedException
+            return data
+        return inner
+
+    return wrapper

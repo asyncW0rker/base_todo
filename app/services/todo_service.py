@@ -12,6 +12,7 @@ from app.errors.http_exceptions import HTTPUserNotFoundException, HTTPToDoNotFou
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
+from app.utils.rbac import ownership_and_role_access_to_object
 from app.utils.s3_manager import S3Manager, get_s3_manager
 
 
@@ -64,14 +65,11 @@ class ToDoService:
             upload_urls=upload_urls,
         )
 
+    @ownership_and_role_access_to_object(UserRole.MANAGER)
     async def get_todo(self, session: AsyncSession, todo_id: int, current_user_info: dict[str, Any]) -> ToDo | None:
         todo = await self.todo_repo.get_one(session, todo_id)
         if todo is None:
             raise HTTPToDoNotFoundException
-
-        if current_user_info.get("role") == UserRole.USER and todo.user_id != int(current_user_info.get("sub")):
-            raise HTTPToDoNotFoundException
-
         return todo
 
     async def get_all_todos(self, session: AsyncSession):
@@ -113,7 +111,7 @@ class ToDoService:
         )
 
         if changed_todo is None:
-            todo = await self.get_todo(session, todo_id, current_user_info)
+            todo = await self.get_todo(session, todo_id, current_user_info=current_user_info)
             raise HTTPToDoVersionMismatchException(detail=f"Actual version for ToDo is {todo.version}")
 
         return changed_todo

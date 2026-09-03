@@ -28,7 +28,7 @@ async def get_attachments(
     session: AsyncSession = Depends(get_session),
     attachment_service: AttachmentService = Depends(get_attachment_service),
 ):
-    return await attachment_service.get_all_attachments(session)
+    return await attachment_service.get_all_attachments(session=session)
 
 
 @router.post(
@@ -51,7 +51,12 @@ async def create_attachment_request_upload(
     session: AsyncSession = Depends(get_session),
     attachment_service: AttachmentService = Depends(get_attachment_service),
 ):
-    return await attachment_service.request_upload(session, todo_id, file_data, current_user_info)
+    return await attachment_service.request_upload(
+        session=session,
+        todo_id=todo_id,
+        file_info=file_data,
+        current_user_info=current_user_info
+    )
 
 
 @router.post(
@@ -71,7 +76,7 @@ async def confirm_upload_attachment(
     session: AsyncSession = Depends(get_session),
     attachment_service: AttachmentService = Depends(get_attachment_service),
 ):
-    return await attachment_service.confirm_upload(session, attachment_id)
+    return await attachment_service.confirm_upload(session=session, attachment_id=attachment_id)
 
 
 @router.get(
@@ -89,7 +94,10 @@ async def download_attachment(
     session: AsyncSession = Depends(get_session),
     attachment_service: AttachmentService = Depends(get_attachment_service),
 ):
-    return await attachment_service.download_attachment(session, attachment_id)
+    return await attachment_service.download_attachment(
+        session=session,
+        attachment_id=attachment_id,
+    )
 
 
 @router.delete(
@@ -109,4 +117,8 @@ async def delete_attachment(
     session: AsyncSession = Depends(get_session),
     attachment_service: AttachmentService = Depends(get_attachment_service),
 ):
-    return await attachment_service.delete_attachment(session, attachment_id, current_user_info)
+    return await attachment_service.delete_attachment(
+        session=session,
+        attachment_id=attachment_id,
+        current_user_info=current_user_info,
+    )

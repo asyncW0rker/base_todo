@@ -24,7 +24,7 @@ async def get_users(
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
 ):
-    return await user_service.get_all_users(session)
+    return await user_service.get_all_users(session=session)
 
 
 @router.get(
@@ -43,7 +43,7 @@ async def get_user(
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
 ):
-    return await user_service.get_user(session, user_id)
+    return await user_service.get_user(session=session, user_id=user_id)
 
 
 @router.put(
@@ -64,7 +64,11 @@ async def update_user(
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
 ):
-    return await user_service.update_user(session, user_id, user_data)
+    return await user_service.update_user(
+        session=session,
+        user_id=user_id,
+        update_data=user_data,
+    )
 
 
 @router.delete(
@@ -83,7 +87,7 @@ async def delete_user(
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
 ):
-    return await user_service.delete_user(session, user_id)
+    return await user_service.delete_user(session=session, user_id=user_id)
 
 
 @router.delete(
@@ -100,4 +104,4 @@ async def delete_users(
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
 ):
-    return await user_service.delete_all_users(session)
+    return await user_service.delete_all_users(session=session)

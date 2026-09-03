@@ -54,6 +54,12 @@ class BaseRepository:
     async def get_one(self, session: AsyncSession, item_id: int) -> Any:
         return await session.get(self.model, item_id)
 
+    async def get_one_with_filters(self, session: AsyncSession, item_id: int, filters: dict[str, Any]) -> Any | None:
+        query = select(self.model).where(id=item_id)
+        filtered_query = self._add_filter_params(query, filters)
+        result = await session.execute(filtered_query)
+        return result.scalar_one_or_none()
+
     async def get_all(self, session: AsyncSession) -> Sequence[Any]:
         result = await session.execute(select(self.model))
         return result.scalars().all()

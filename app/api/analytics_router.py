@@ -57,7 +57,7 @@ async def get_todos_analytics(
     session: AsyncSession = Depends(get_session),
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
-    analytics_job = await analytics_service.get_analytics_job(session, job_id)
+    analytics_job = await analytics_service.get_analytics_job(session=session, job_id=job_id)
     if analytics_job.status != JobStatus.DONE:
         return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
@@ -84,7 +84,7 @@ async def get_todos_analytics_by_params(
     session: AsyncSession = Depends(get_session),
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
-    return await analytics_service.get_analytics_job_by_params(session, filter_params)
+    return await analytics_service.get_analytics_job_by_params(session=session, filter_params=filter_params)
 
 
 @router.delete("/")
@@ -92,4 +92,4 @@ async def delete_all_analytics_jobs(
     session: AsyncSession = Depends(get_session),
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
-    return await analytics_service.delete_all_analytics_jobs(session)
+    return await analytics_service.delete_all_analytics_jobs(session=session)

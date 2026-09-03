@@ -25,7 +25,7 @@ async def create_user(
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
 ):
-    return await user_service.register_user(session, user_data)
+    return await user_service.register_user(session=session, creation_data=user_data)
 
 
 @router.post(
@@ -41,7 +41,7 @@ async def authenticate_user(
     session: AsyncSession = Depends(get_session),
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    return await auth_service.authenticate(session, auth_data)
+    return await auth_service.authenticate(session=session, user_data=auth_data)
 
 
 @router.post(
@@ -57,7 +57,7 @@ async def refresh_token(
     session: AsyncSession = Depends(get_session),
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    return await auth_service.refresh(session, refresh_data)
+    return await auth_service.refresh(session=session, refresh_data=refresh_data)
 
 
 @router.post(
@@ -76,4 +76,4 @@ async def revoke_token(
     session: AsyncSession = Depends(get_session),
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    return await auth_service.revoke_token(session, user_id)
+    return await auth_service.revoke_token(session=session, user_id=user_id)
