@@ -8,7 +8,7 @@ from app.database.schemas import ToDoFilterParams, ToDoExportOrderingParams, Job
     ImportJobOutput, ExportJobOutput, ExportDownloadUrl, HTTPErrorDetail
 from app.services.file_service.file_service import FileService, get_file_service
 from app.services.todo_service import ToDoService, get_todo_service
-from app.utils.dependencies import auth_required
+from app.utils.dependencies import auth_required, manager_role_required
 from app.utils.utils import get_current_user_payload
 
 
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/todos", tags=["files"])
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     },
-    dependencies=[],
+    dependencies=[manager_role_required],
 )
 async def get_import_job_info(
     job_id: int,
@@ -43,7 +43,7 @@ async def get_import_job_info(
             status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
             status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         },
-    dependencies=[],
+    dependencies=[manager_role_required],
 )
 async def import_todos(
     file: UploadFile = File(...),
@@ -67,7 +67,7 @@ async def import_todos(
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     },
-    dependencies=[],
+    dependencies=[manager_role_required],
 )
 async def get_export_job_info(
     job_id: int,
@@ -86,7 +86,7 @@ async def get_export_job_info(
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
     },
-    dependencies=[],
+    dependencies=[manager_role_required],
 )
 async def get_export_job_download_url(
     job_id: int,

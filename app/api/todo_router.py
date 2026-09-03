@@ -179,20 +179,3 @@ async def delete_todo(
     todo_service: ToDoService = Depends(get_todo_service),
 ):
     return await todo_service.delete_todo(session=session, todo_id=todo_id)
-
-
-@router.delete(
-    "/",
-    response_model=Message,
-    responses={
-        status.HTTP_200_OK: {"model": Message},
-        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
-        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
-    },
-    dependencies=[admin_role_required],
-)
-async def delete_todos(
-    session: AsyncSession = Depends(get_session),
-    todo_service: ToDoService = Depends(get_todo_service),
-):
-    return await todo_service.delete_all_todos(session=session)

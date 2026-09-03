@@ -12,7 +12,7 @@ from app.errors.http_exceptions import HTTPUserNotFoundException, HTTPToDoNotFou
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
-from app.utils.rbac import ownership_and_role_access_to_object, filter_data_by_user_id_and_role
+from app.utils.rbac import check_ownership_and_role_access, filter_data_by_user_id_and_role
 from app.utils.s3_manager import S3Manager, get_s3_manager
 
 
@@ -59,7 +59,7 @@ class ToDoService:
             upload_urls=upload_urls,
         )
 
-    @ownership_and_role_access_to_object(UserRole.MANAGER)
+    @check_ownership_and_role_access(UserRole.MANAGER)
     async def get_todo(self, session: AsyncSession, todo_id: int, current_user_info: dict[str, Any]) -> ToDo | None:
         todo = await self.todo_repo.get_one(session, todo_id)
         if todo is None:

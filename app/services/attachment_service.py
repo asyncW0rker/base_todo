@@ -5,30 +5,22 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Attachment
-from app.database.schemas import AttachmentUploadRequest, UserRole
+from app.database.schemas import AttachmentUploadRequest
 from app.errors.http_exceptions import HTTPAttachmentTooLargeException, HTTPAttachmentNotFoundException, \
-    HTTPToDoNotFoundException, HTTPPrivatePermissionDeniedException
+    HTTPToDoNotFoundException
 from app.errors.exceptions import FileNotFoundException, TooLargeException
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.utils.config import settings
+from app.utils.rbac import RBACServiceMixin
 from app.utils.s3_manager import S3Manager, get_s3_manager
 
 
 @dataclass
-class AttachmentService:
+class AttachmentService(RBACServiceMixin):
     s3_manager: S3Manager = field(default_factory=get_s3_manager)
     attachment_repo: AttachmentRepository = AttachmentRepository()
     todo_repo: ToDoRepository = ToDoRepository()
-
-    @staticmethod
-    def _check_user_permission(
-        allowed_user_id: int,
-        current_user_info: dict[str, Any],
-    ):
-        user_id, user_role = int(current_user_info.get("sub")), current_user_info.get("role")
-        if user_role == UserRole.USER and user_id != allowed_user_id:
-            raise HTTPPrivatePermissionDeniedException
 
     async def get_all_attachments(self, session: AsyncSession) -> list[Attachment]:
         return await self.attachment_repo.get_all(session)

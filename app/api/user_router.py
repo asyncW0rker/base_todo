@@ -88,20 +88,3 @@ async def delete_user(
     user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.delete_user(session=session, user_id=user_id)
-
-
-@router.delete(
-    "/",
-    response_model=Message,
-    responses={
-        status.HTTP_200_OK: {"model": Message},
-        status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
-        status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
-    },
-    dependencies=[admin_role_required],
-)
-async def delete_users(
-    session: AsyncSession = Depends(get_session),
-    user_service: UserService = Depends(get_user_service),
-):
-    return await user_service.delete_all_users(session=session)

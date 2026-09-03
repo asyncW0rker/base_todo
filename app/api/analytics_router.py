@@ -8,7 +8,7 @@ from app.database.db import get_session
 from app.database.schemas import ToDoAnalyticsFilterParams, JobAccepted, AnalyticsJobOutput, \
     JobStatus, HTTPErrorDetail
 from app.services.analytics_service import AnalyticsService, get_analytics_service
-from app.utils.dependencies import auth_required
+from app.utils.dependencies import auth_required, manager_role_required
 from app.utils.utils import get_current_user_payload
 
 
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/todos/analytics", tags=["analytics"])
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
     },
-    dependencies=[auth_required],
+    dependencies=[manager_role_required],
 )
 async def compute_todos_analytics(
     filter_params: ToDoAnalyticsFilterParams,
@@ -50,7 +50,8 @@ async def compute_todos_analytics(
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
-    }
+    },
+    dependencies=[manager_role_required],
 )
 async def get_todos_analytics(
     job_id: int,
@@ -77,7 +78,8 @@ async def get_todos_analytics(
         status.HTTP_401_UNAUTHORIZED: {"model": HTTPErrorDetail},
         status.HTTP_403_FORBIDDEN: {"model": HTTPErrorDetail},
         status.HTTP_404_NOT_FOUND: {"model": HTTPErrorDetail},
-    }
+    },
+    dependencies=[manager_role_required],
 )
 async def get_todos_analytics_by_params(
     filter_params: Annotated[ToDoAnalyticsFilterParams, Depends()],
@@ -85,11 +87,3 @@ async def get_todos_analytics_by_params(
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ):
     return await analytics_service.get_analytics_job_by_params(session=session, filter_params=filter_params)
-
-
-@router.delete("/")
-async def delete_all_analytics_jobs(
-    session: AsyncSession = Depends(get_session),
-    analytics_service: AnalyticsService = Depends(get_analytics_service),
-):
-    return await analytics_service.delete_all_analytics_jobs(session=session)
