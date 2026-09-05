@@ -178,7 +178,8 @@ async def update_status_for_todos(
 )
 async def delete_todo(
     todo_id: int,
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
-    return await todo_service.delete_todo(session=session, todo_id=todo_id)
+    return await todo_service.delete_todo(session=session, todo_id=todo_id, current_user_info=current_user_info)

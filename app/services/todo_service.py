@@ -124,7 +124,7 @@ class ToDoService:
         await self.log_manager.log_update(
             session=session,
             todo_id=todo_id,
-            update_data={"update_data": update_data.model_dump()},
+            update_data={"update_data": update_data.model_dump(mode="json")},
             actor_id=int(current_user_info["sub"]),
         )
 
@@ -151,7 +151,7 @@ class ToDoService:
             actor_id=int(current_user_info["sub"]),
             update_data={
                 "updated_ids": changed_todos_ids,
-                "update_data": update_data.model_dump(),
+                "update_data": update_data.model_dump(mode="json"),
             }
         )
 
