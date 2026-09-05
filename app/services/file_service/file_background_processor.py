@@ -1,14 +1,17 @@
 import datetime as dt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 
 from app.database.db import session_maker
-from app.database.schemas import JobStatus, ToDoOutput
+from app.database.schemas import JobStatus
 from app.services.file_service.file_service_base import FileServiceBase
+from app.utils.log_manager import LogManager, get_log_manager
 
 
 @dataclass
 class FileBackgroundProcessor(FileServiceBase):
+    log_manager: LogManager = field(default_factory=get_log_manager)
+
     async def process_import_job(
         self,
         job_id: int,
@@ -16,7 +19,7 @@ class FileBackgroundProcessor(FileServiceBase):
         file_content: bytes,
     ) -> None:
         async with session_maker() as session:
-            await self.update_import_job(session, job_id, {
+            job = await self.update_import_job(session, job_id, {
                 "status": JobStatus.RUNNING,
                 "started_at": dt.datetime.now(dt.UTC)
             })
@@ -34,7 +37,13 @@ class FileBackgroundProcessor(FileServiceBase):
                     if parsed_row.is_valid:
                         created_count += 1
                         parsed_row.data.pop("attachments_meta")
-                        await self.todo_repo.create_one_uncommited(session, parsed_row.data)
+                        todo = await self.todo_repo.create_one_uncommited(session, parsed_row.data)
+                        await self.log_manager.log_create(
+                            session=session,
+                            actor_id=job.user_id,
+                            todo_id=todo.id,
+                            creation_data=parsed_row.data,
+                        )
                     else:
                         errors.append({
                             "row_number": parsed_row.row_number,
