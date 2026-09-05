@@ -33,7 +33,7 @@ class LogManager:
         })
 
     async def log_delete(self, session: AsyncSession, actor_id: int, todo_id: int) -> None:
-        await self.repo.create_one_uncommited(session, {
+        await self.repo.create_one(session, {
             "actor_id": actor_id,
             "todo_id": todo_id,
             "action": LogAction.DELETE,

@@ -91,10 +91,11 @@ class BaseRepository:
 
     async def update_many(
         self, session: AsyncSession, items_ids: list[int], filter_params: dict[str, Any], update_data: dict[str, Any]
-    ) -> int:
+    ) -> list[int]:
         query = (
             update(self.model)
             .where(self.model.id.in_(items_ids))
+            .returning(self.model.id)
         )
 
         if filter_params:
@@ -103,7 +104,7 @@ class BaseRepository:
         query = query.values(**update_data)
         result = await session.execute(query)
         await session.commit()
-        return result.rowcount
+        return list(result.scalars().all())
 
     async def delete_one(self, session: AsyncSession, item_id: int) -> int:
         result = await session.execute(delete(self.model).where(self.model.id == item_id))

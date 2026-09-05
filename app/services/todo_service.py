@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import ToDo
 from app.database.schemas import ToDoCreate, ToDoUpdate, ToDoFilterParams, \
-    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams, ToDoWithUploads, BaseOrderingParams
+    ToDoStatusUpdate, UserRole, ToDoPatch, ToDoSearchParams, ToDoWithUploads, BaseOrderingParams, Message
 from app.errors.http_exceptions import HTTPUserNotFoundException, HTTPToDoNotFoundException, \
     HTTPToDoVersionMismatchException
 from app.repos.attachment_repo import AttachmentRepository
@@ -124,7 +124,7 @@ class ToDoService:
         await self.log_manager.log_update(
             session=session,
             todo_id=todo_id,
-            update_data=update_data.model_dump(),
+            update_data={"update_data": update_data.model_dump()},
             actor_id=int(current_user_info["sub"]),
         )
 
@@ -137,27 +137,40 @@ class ToDoService:
         update_data: ToDoStatusUpdate,
         current_user_info: dict[str, Any],
         filter_params: Any | None = None,
-    ):
+    ) -> dict[str, Any]:
         filter_params = filter_params or {}
         update_data_dict = update_data.model_dump()
         todos_ids = update_data_dict.pop("ids")
 
-        changed_todos_count = await self.todo_repo.update_many(
+        changed_todos_ids = await self.todo_repo.update_many(
             session=session, items_ids=todos_ids, filter_params=filter_params, update_data=update_data_dict
         )
+        await self.log_manager.log_update(
+            session=session,
+            todo_id=0,
+            actor_id=int(current_user_info["sub"]),
+            update_data={
+                "updated_ids": changed_todos_ids,
+                "update_data": update_data.model_dump(),
+            }
+        )
+
         return {
-            "message": f"Updated_count: {changed_todos_count}"
+            "message": f"Updated_count: {len(changed_todos_ids)}",
         }
 
-    async def delete_todo(self, session: AsyncSession, todo_id: int):
+    async def delete_todo(
+        self, session: AsyncSession, todo_id: int, current_user_info: dict[str, Any]
+    ) -> dict[str, Any]:
         deleted_todos_count = await self.todo_repo.delete_one(session, todo_id)
         if deleted_todos_count == 0:
             raise HTTPToDoNotFoundException
+        await self.log_manager.log_delete(
+            session=session,
+            todo_id=todo_id,
+            actor_id=int(current_user_info["sub"]),
+        )
         return {"message": "ToDo deleted"}
-
-    async def delete_all_todos(self, session: AsyncSession):
-        await self.todo_repo.delete_all(session)
-        return {"message": "All todos deleted"}
 
 
 @lru_cache
