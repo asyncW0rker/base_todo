@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP, TSVECTOR, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
-from app.database.schemas import UserRole, JobStatus, AttachmentContentType
+from app.database.schemas import UserRole, JobStatus, AttachmentContentType, LogAction
 
 
 class User(Base):
@@ -127,3 +127,14 @@ class ExportJob(Base):
     finished_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
     user_id: Mapped[int] = mapped_column(ForeignKey(User.id, ondelete="CASCADE"), nullable=False)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_id: Mapped[int] = mapped_column(nullable=False)
+    todo_id: Mapped[int | None]
+    action: Mapped[str] = mapped_column(Enum(LogAction), nullable=False)
+    diff: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True), default=dt.datetime.now)

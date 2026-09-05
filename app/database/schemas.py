@@ -12,12 +12,14 @@ possible_roles = ["user", "manager", "admin"]
 possible_query_languages = ["russian", "english"]
 possible_job_statuses = ["pending", "running", "done", "failed"]
 possible_content_types = ["image/jpeg", "image/png", "application/pdf"]
+possible_log_actions = ["create", "update", "delete"]
 
 UserRole = generate_enum_from_fields("UserRole", possible_roles)
 AnalyticsTimezone = generate_enum_from_fields("AnalyticsTimezone", pytz.all_timezones)
 QueryLanguage = generate_enum_from_fields("QueryLanguage", possible_query_languages)
 JobStatus = generate_enum_from_fields("JobStatus", possible_job_statuses)
 AttachmentContentType = generate_enum_from_fields("AttachmentContentType", possible_content_types)
+LogAction = generate_enum_from_fields("LogAction", possible_log_actions)
 
 
 class HTTPErrorDetail(BaseModel):
