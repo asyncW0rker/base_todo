@@ -12,6 +12,7 @@ from app.errors.http_exceptions import HTTPUserNotFoundException, HTTPToDoNotFou
 from app.repos.attachment_repo import AttachmentRepository
 from app.repos.todo_repo import ToDoRepository
 from app.repos.user_repo import UserRepository
+from app.utils.log_manager import LogManager, get_log_manager
 from app.utils.rbac import check_ownership_and_role_access, filter_data_by_user_id_and_role
 from app.utils.s3_manager import S3Manager, get_s3_manager
 
@@ -19,16 +20,19 @@ from app.utils.s3_manager import S3Manager, get_s3_manager
 @dataclass
 class ToDoService:
     todo_repo: ToDoRepository = ToDoRepository()
+    attachment_repo: AttachmentRepository = AttachmentRepository()
     user_repo: UserRepository = UserRepository()
     s3_manager: S3Manager = field(default_factory=get_s3_manager)
-    attachment_repo: AttachmentRepository = AttachmentRepository()
+    log_manager: LogManager = field(default_factory=get_log_manager)
 
     async def _check_user_existence(self, session: AsyncSession, user_id: int) -> None:
         user = await self.user_repo.get_one(session, user_id)
         if user is None:
             raise HTTPUserNotFoundException
 
-    async def create_todo(self, session: AsyncSession, creation_data: ToDoCreate) -> ToDoWithUploads:
+    async def create_todo(
+        self, session: AsyncSession, creation_data: ToDoCreate, current_user_info: dict[str, Any],
+    ) -> ToDoWithUploads:
         if creation_data.user_id is not None:
             await self._check_user_existence(session, creation_data.user_id)
 
@@ -51,6 +55,14 @@ class ToDoService:
                 "storage_key": storage_key,
                 "todo_id": todo.id,
             })
+
+        creation_params["attachments_meta"] = attachments_meta
+        await self.log_manager.log_create(
+            session=session,
+            creation_data=creation_params,
+            actor_id=int(current_user_info["sub"]),
+            todo_id=todo.id,
+        )
 
         await self.attachment_repo.create_many(session, attachments_data)
 
@@ -108,6 +120,13 @@ class ToDoService:
         if changed_todo is None:
             todo = await self.get_todo(session=session, todo_id=todo_id, current_user_info=current_user_info)
             raise HTTPToDoVersionMismatchException(detail=f"Actual version for ToDo is {todo.version}")
+
+        await self.log_manager.log_update(
+            session=session,
+            todo_id=todo_id,
+            update_data=update_data.model_dump(),
+            actor_id=int(current_user_info["sub"]),
+        )
 
         return changed_todo
 

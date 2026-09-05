@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +25,7 @@ class LogManager:
     async def log_update(
         self, session: AsyncSession, update_data: dict[str, Any], actor_id: int, todo_id: int
     ) -> None:
-        await self.repo.create_one_uncommited(session, {
+        await self.repo.create_one(session, {
             "actor_id": actor_id,
             "todo_id": todo_id,
             "action": LogAction.UPDATE,
@@ -38,3 +39,8 @@ class LogManager:
             "action": LogAction.DELETE,
             "diff": {"deleted": todo_id}
         })
+
+
+@lru_cache
+def get_log_manager():
+    return LogManager()

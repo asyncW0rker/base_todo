@@ -79,10 +79,13 @@ async def get_todo(
 )
 async def create_todo(
     todo_data: ToDoCreate,
+    current_user_info: dict[str, Any] = Depends(get_current_user_payload),
     session: AsyncSession = Depends(get_session),
     todo_service: ToDoService = Depends(get_todo_service),
 ):
-    return await todo_service.create_todo(session, todo_data)
+    return await todo_service.create_todo(
+        session=session, creation_data=todo_data, current_user_info=current_user_info
+    )
 
 
 @router.put(
