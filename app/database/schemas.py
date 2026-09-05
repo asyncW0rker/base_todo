@@ -293,3 +293,26 @@ class RefreshToken(BaseModel):
 class AuthOutput(BaseModel):
     access_token: str
     refresh_token: str
+
+
+class AuditLogFilterParams(BaseFilterParams):
+    actor_id: int | None = None
+    todo_id: int | None = None
+
+
+class AuditLogOutput(BaseModel):
+    id: int
+    actor_id: int
+    todo_id: int | None
+    action: LogAction
+    diff: dict[str, Any]
+    created_at: dt.datetime
+
+
+AuditLogSortingFields = generate_ordering_enum(
+    "AuditLogSortingFields", AuditLogOutput, ["diff"]
+)
+
+
+class AuditLogOrderingParams(BaseFilterParams):
+    sort_by: AuditLogSortingFields = AuditLogSortingFields.CREATED_AT
