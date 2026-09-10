@@ -23,9 +23,9 @@ class LogManager:
         })
 
     async def log_update(
-        self, session: AsyncSession, update_data: dict[str, Any], actor_id: int, todo_id: int
+        self, session: AsyncSession, update_data: dict[str, Any], actor_id: int, todo_id: int | None
     ) -> None:
-        await self.repo.create_one(session, {
+        await self.repo.create_one_uncommited(session, {
             "actor_id": actor_id,
             "todo_id": todo_id,
             "action": LogAction.UPDATE,
@@ -33,7 +33,7 @@ class LogManager:
         })
 
     async def log_delete(self, session: AsyncSession, actor_id: int, todo_id: int) -> None:
-        await self.repo.create_one(session, {
+        await self.repo.create_one_uncommited(session, {
             "actor_id": actor_id,
             "todo_id": todo_id,
             "action": LogAction.DELETE,

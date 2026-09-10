@@ -30,13 +30,6 @@ class BaseRepository:
 
         return query
 
-    async def create_one(self, session: AsyncSession, creation_data: dict[str, Any]) -> Any:
-        new_object = self.model(**creation_data)
-        session.add(new_object)
-        await session.commit()
-        await session.refresh(new_object)
-        return new_object
-
     async def create_one_uncommited(self, session: AsyncSession, creation_data: dict[str, Any]) -> Any:
         new_object = self.model(**creation_data)
         session.add(new_object)
@@ -44,11 +37,20 @@ class BaseRepository:
         await session.refresh(new_object)
         return new_object
 
-    async def create_many(self, session: AsyncSession, creation_data_list: list[dict[str, Any]]) -> None:
+    async def create_one(self, session: AsyncSession, creation_data: dict[str, Any]) -> Any:
+        result = await self.create_one_uncommited(session, creation_data)
+        await session.commit()
+        return result
+
+    async def create_many_uncommited(self, session: AsyncSession, creation_data_list: list[dict[str, Any]]) -> None:
         for creation_data in creation_data_list:
             new_object = self.model(**creation_data)
             session.add(new_object)
 
+        await session.flush()
+
+    async def create_many(self, session: AsyncSession, creation_data_list: list[dict[str, Any]]) -> None:
+        await self.create_many_uncommited(session, creation_data_list)
         await session.commit()
 
     async def get_one(self, session: AsyncSession, item_id: int) -> Any:
@@ -69,7 +71,7 @@ class BaseRepository:
         result = await session.execute(query)
         return result.scalars().all()
 
-    async def update_one(
+    async def update_one_uncommited(
         self, session: AsyncSession, item_id: int, filter_params: dict[str, Any], update_data: dict[str, Any]
     ) -> Any:
         query = (
@@ -86,10 +88,17 @@ class BaseRepository:
             .returning(self.model)
         )
         result = await session.execute(query)
-        await session.commit()
+        await session.flush()
         return result.scalar_one_or_none()
 
-    async def update_many(
+    async def update_one(
+        self, session: AsyncSession, item_id: int, filter_params: dict[str, Any], update_data: dict[str, Any]
+    ) -> Any:
+        result = await self.update_one_uncommited(session, item_id, filter_params, update_data)
+        await session.commit()
+        return result
+
+    async def update_many_uncommited(
         self, session: AsyncSession, items_ids: list[int], filter_params: dict[str, Any], update_data: dict[str, Any]
     ) -> list[int]:
         query = (
@@ -106,10 +115,23 @@ class BaseRepository:
         await session.commit()
         return list(result.scalars().all())
 
-    async def delete_one(self, session: AsyncSession, item_id: int) -> int:
-        result = await session.execute(delete(self.model).where(self.model.id == item_id))
+    async def update_many(
+            self, session: AsyncSession, items_ids: list[int], filter_params: dict[str, Any],
+            update_data: dict[str, Any]
+    ) -> list[int]:
+        result = await self.update_many_uncommited(session, items_ids, filter_params, update_data)
         await session.commit()
+        return result
+
+    async def delete_one_uncommited(self, session: AsyncSession, item_id: int) -> int:
+        result = await session.execute(delete(self.model).where(self.model.id == item_id))
+        await session.flush()
         return result.rowcount
+
+    async def delete_one(self, session: AsyncSession, item_id: int) -> int:
+        result = await self.delete_one_uncommited(session, item_id)
+        await session.commit()
+        return result
 
     async def delete_all(self, session: AsyncSession) -> None:
         await session.execute(delete(self.model))

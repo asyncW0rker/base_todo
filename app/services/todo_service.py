@@ -56,6 +56,8 @@ class ToDoService:
                 "todo_id": todo.id,
             })
 
+        await self.attachment_repo.create_many_uncommited(session, attachments_data)
+
         creation_params["attachments_meta"] = attachments_meta
         await self.log_manager.log_create(
             session=session,
@@ -63,8 +65,7 @@ class ToDoService:
             actor_id=int(current_user_info["sub"]),
             todo_id=todo.id,
         )
-
-        await self.attachment_repo.create_many(session, attachments_data)
+        await session.commit()
 
         return ToDoWithUploads(
             todo=todo,
@@ -113,7 +114,7 @@ class ToDoService:
         filter_params["version"] = update_data.version
         update_data.version += 1
 
-        changed_todo = await self.todo_repo.update_one(
+        changed_todo = await self.todo_repo.update_one_uncommited(
             session=session, item_id=todo_id, filter_params=filter_params, update_data=update_data.model_dump()
         )
 
@@ -127,6 +128,7 @@ class ToDoService:
             update_data={"update_data": update_data.model_dump(mode="json")},
             actor_id=int(current_user_info["sub"]),
         )
+        await session.commit()
 
         return changed_todo
 
@@ -142,18 +144,19 @@ class ToDoService:
         update_data_dict = update_data.model_dump()
         todos_ids = update_data_dict.pop("ids")
 
-        changed_todos_ids = await self.todo_repo.update_many(
+        changed_todos_ids = await self.todo_repo.update_many_uncommited(
             session=session, items_ids=todos_ids, filter_params=filter_params, update_data=update_data_dict
         )
         await self.log_manager.log_update(
             session=session,
-            todo_id=0,
+            todo_id=None,
             actor_id=int(current_user_info["sub"]),
             update_data={
                 "updated_ids": changed_todos_ids,
                 "update_data": update_data.model_dump(mode="json"),
             }
         )
+        await session.commit()
 
         return {
             "message": f"Updated_count: {len(changed_todos_ids)}",
@@ -162,14 +165,17 @@ class ToDoService:
     async def delete_todo(
         self, session: AsyncSession, todo_id: int, current_user_info: dict[str, Any]
     ) -> dict[str, Any]:
-        deleted_todos_count = await self.todo_repo.delete_one(session, todo_id)
+        deleted_todos_count = await self.todo_repo.delete_one_uncommited(session, todo_id)
         if deleted_todos_count == 0:
             raise HTTPToDoNotFoundException
+
         await self.log_manager.log_delete(
             session=session,
             todo_id=todo_id,
             actor_id=int(current_user_info["sub"]),
         )
+        await session.commit()
+
         return {"message": "ToDo deleted"}
 
 
