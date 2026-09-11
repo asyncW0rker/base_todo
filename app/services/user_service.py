@@ -37,6 +37,7 @@ class UserService:
 
     async def update_user(self, session: AsyncSession, user_id: int, update_data: UserUpdate):
         try:
+            update_data.password = self.password_manager.hash_password(update_data.password)
             changed_user = await self.repo.update_one(session, user_id, dict(), update_data.model_dump())
             if changed_user is None:
                 raise HTTPUserNotFoundException
