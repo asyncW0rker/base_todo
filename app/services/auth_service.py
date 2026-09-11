@@ -38,12 +38,12 @@ class AuthService:
 
         return user
 
-    async def _add_refresh_token_to_db(
+    async def _add_refresh_token_to_db_uncommited(
         self, session: AsyncSession, refresh_token: str, user_id: int,
     ) -> None:
         refresh_hash = self.jwt_manager.hash_refresh_token(refresh_token)
         expires_at = dt.datetime.now(dt.UTC) + dt.timedelta(seconds=settings.security.JWT_REFRESH_EXPIRE_SECONDS)
-        await self.token_repo.create_one(
+        await self.token_repo.create_one_uncommited(
             session=session,
             creation_data={
                 "refresh_token": refresh_hash,
@@ -51,6 +51,12 @@ class AuthService:
                 "expires_at": expires_at,
             }
         )
+
+    async def _add_refresh_token_to_db(
+            self, session: AsyncSession, refresh_token: str, user_id: int,
+    ) -> None:
+        await self._add_refresh_token_to_db_uncommited(session, refresh_token, user_id)
+        await session.commit()
 
     async def authenticate(self, session: AsyncSession, user_data: AuthData):
         user = await self._validate_user_data(session, user_data)
@@ -87,7 +93,8 @@ class AuthService:
         access_token, refresh_token = self.jwt_manager.create_token_pair(payload)
 
         await self.token_repo.delete_one_uncommited(session, token_id)
-        await self._add_refresh_token_to_db(session, refresh_token, user_id)
+        await self._add_refresh_token_to_db_uncommited(session, refresh_token, user_id)
+        await session.commit()
 
         return {
             "access_token": access_token,

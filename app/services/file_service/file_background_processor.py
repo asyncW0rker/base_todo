@@ -51,12 +51,13 @@ class FileBackgroundProcessor(FileServiceBase):
                             "data": parsed_row.data,
                         })
 
-                await self.update_import_job(session, job_id, {
+                await self.update_import_job_uncommited(session, job_id, {
                     "status": JobStatus.DONE,
                     "created_count": created_count,
                     "errors": errors,
                     "finished_at": dt.datetime.now(dt.UTC),
                 })
+                await session.commit()
 
             except Exception as e:
                 await session.rollback()

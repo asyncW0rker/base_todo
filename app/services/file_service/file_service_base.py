@@ -46,10 +46,17 @@ class FileServiceBase:
             raise HTTPExportJobNotFoundException
         return export_job
 
-    async def update_import_job(self, session: AsyncSession, job_id: int, update_data: dict[str, Any]) -> ImportJob:
-        job = await self.import_repo.update_one(session, job_id, dict(), update_data)
+    async def update_import_job_uncommited(
+        self, session: AsyncSession, job_id: int, update_data: dict[str, Any]
+    )-> ImportJob:
+        job = await self.import_repo.update_one_uncommited(session, job_id, dict(), update_data)
         if job is None:
             raise HTTPImportJobNotFoundException
+        return job
+
+    async def update_import_job(self, session: AsyncSession, job_id: int, update_data: dict[str, Any]) -> ImportJob:
+        job = await self.update_import_job_uncommited(session, job_id, update_data)
+        await session.commit()
         return job
 
     async def update_export_job(self, session: AsyncSession, job_id: int, update_data: dict[str, Any]) -> ExportJob:
