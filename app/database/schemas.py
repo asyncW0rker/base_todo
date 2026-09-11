@@ -305,8 +305,8 @@ class AuditLogOutput(BaseModel):
     actor_id: int
     todo_id: int | None
     action: LogAction
-    diff: dict[str, Any]
     created_at: dt.datetime
+    diff: dict[str, Any]
 
 
 AuditLogSortingFields = generate_ordering_enum(
