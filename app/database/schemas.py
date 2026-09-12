@@ -316,3 +316,13 @@ AuditLogSortingFields = generate_ordering_enum(
 
 class AuditLogOrderingParams(BaseFilterParams):
     sort_by: AuditLogSortingFields = AuditLogSortingFields.CREATED_AT
+
+
+class HealthOutput:
+    status: str
+    services: dict[str, Any]
+
+
+class HealthError:
+    status: str
+    error: str

@@ -5,6 +5,7 @@ from functools import lru_cache
 from fastapi import status
 from fastapi.responses import JSONResponse
 import redis.asyncio as redis
+from sqlalchemy import text
 
 from app.database.db import get_db_context
 from app.utils.config import settings
@@ -13,18 +14,18 @@ from app.utils.s3_manager import get_s3_manager
 
 @dataclass
 class HealthChecker:
-    db_context = get_db_context
-    redis_client = redis.from_url(
-        url=settings.redis.redis_url,
-        socket_connect_timeout=3,
-        socket_timeout=3,
-    )
-    s3_manager = get_s3_manager()
+    def __init__(self):
+        self.redis_client = redis.from_url(
+            url=settings.redis.redis_url,
+            socket_connect_timeout=3,
+            socket_timeout=3,
+        )
+        self.s3_manager = get_s3_manager()
 
     async def _check_database(self):
-        async with self.db_context() as session:
+        async with get_db_context() as session:
             try:
-                await session.execute("SELECT 1")
+                await session.execute(text("SELECT 1"))
                 return {"status": "up"}
             except Exception as e:
                 return {"status": "down", "error": str(e)}
