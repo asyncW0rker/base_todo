@@ -318,11 +318,11 @@ class AuditLogOrderingParams(BaseFilterParams):
     sort_by: AuditLogSortingFields = AuditLogSortingFields.CREATED_AT
 
 
-class HealthOutput:
+class HealthOutput(BaseModel):
     status: str
     services: dict[str, Any]
 
 
-class HealthError:
+class HealthError(BaseModel):
     status: str
     error: str

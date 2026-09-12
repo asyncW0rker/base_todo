@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.user_router import router as users_router
 from app.api.todo_router import router as todos_router
@@ -12,6 +13,8 @@ from app.errors.handlers import pydantic_validation_exception_handler
 
 
 app = FastAPI()
+
+Instrumentator().instrument(app)
 
 app.include_router(users_router)
 app.include_router(auth_router)

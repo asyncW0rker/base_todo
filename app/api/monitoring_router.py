@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import Response
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db import get_session
@@ -43,3 +45,11 @@ async def check_health(
     health_checker: HealthChecker = Depends(get_health_checker)
 ):
     return await health_checker.check_health()
+
+
+@router.get("/metrics",)
+async def get_metrics():
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
