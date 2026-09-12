@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import Response
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import PlainTextResponse
 
 from app.database.db import get_session
 from app.database.schemas import AuditLogFilterParams, AuditLogOrderingParams, HTTPErrorDetail, Message, AuditLogOutput, \
@@ -47,7 +48,12 @@ async def check_health(
     return await health_checker.check_health()
 
 
-@router.get("/metrics",)
+@router.get(
+    "/metrics",
+    response_class=PlainTextResponse,
+    summary="Prometheus metrics",
+    description="Returns metrics in Prometheus text format",
+)
 async def get_metrics():
     return Response(
         content=generate_latest(),
