@@ -64,6 +64,17 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
     restart: unless-stopped
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "${LOKI_PORT}:${LOKI_PORT}"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+      - -config.expand-env=true
+    restart: unless-stopped
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -80,3 +91,4 @@ volumes:
   redis_data:
   prometheus_data:
   grafana_data:
+  loki_data:
