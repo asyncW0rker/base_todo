@@ -87,6 +87,14 @@ class S3Manager:
                 Key=file_key
             )
 
+    async def check_health(self):
+        try:
+            async with self._session.create_client(**self._get_client_params()) as client:
+                await client.list_buckets()
+                return {"status": "up"}
+        except Exception as e:
+            return {"status": "down", "error": str(e)}
+
 
 @lru_cache
 def get_s3_manager():

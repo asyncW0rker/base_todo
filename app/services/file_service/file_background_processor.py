@@ -2,7 +2,7 @@ import datetime as dt
 from dataclasses import dataclass, field
 from functools import lru_cache
 
-from app.database.db import session_maker
+from app.database.db import get_db_context
 from app.database.schemas import JobStatus
 from app.services.file_service.file_service_base import FileServiceBase
 from app.utils.log_manager import LogManager, get_log_manager
@@ -18,7 +18,7 @@ class FileBackgroundProcessor(FileServiceBase):
         filename: str,
         file_content: bytes,
     ) -> None:
-        async with session_maker() as session:
+        async with get_db_context() as session:
             job = await self.update_import_job(session, job_id, {
                 "status": JobStatus.RUNNING,
                 "started_at": dt.datetime.now(dt.UTC)
@@ -68,7 +68,7 @@ class FileBackgroundProcessor(FileServiceBase):
                 })
 
     async def process_export_job(self, job_id: int, data: list[dict]) -> None:
-        async with session_maker() as session:
+        async with get_db_context() as session:
             try:
                 job = await self.update_export_job(session, job_id, {
                     "status": JobStatus.RUNNING,
